@@ -4,6 +4,44 @@ An interactive CLI agent (built on the GitHub Copilot SDK) that plans and
 executes the migration of a legacy PHP + JavaScript cookbook app to
 React + TypeScript on the frontend and FastAPI + PostgreSQL on the backend.
 
+## What was fixed
+
+The version you had would not run at all, and most of its own building
+blocks were unused:
+
+- It crashed immediately on startup because it tried to read
+  `prompts/migration.md`, a file that doesn't exist. It now uses the
+  `SYSTEM_GOAL` prompt already defined in `prompts.ts`.
+- `Workflow`, `Planner`, `Executor`, `State`, `History`, `checkpoint.ts`,
+  `repository.ts` and the `/plan`, `/migrate`, `/status`, `/reset` commands
+  in `commands.ts` were all written but never connected to the running
+  agent — it was really just a plain chat loop. They're now wired together
+  end to end.
+- `Executor.execute()` never returned the model's answer, so nothing could
+  be logged to history. Fixed.
+- `package.json` had a `start` script pointing at `dist/index.js` but no
+  `build` script and no `tsconfig.json`, so a production build was
+  impossible. Both are now included.
+- **Path layout bug:** the agent lives in `/agent`, while `/frontend`,
+  `/backend`, and `/legacy` are siblings of it, not children. Two things
+  assumed otherwise: `repository.ts` was checking for
+  `frontend`/`backend`/`legacy` relative to the agent's own working
+  directory (so it always reported them "missing"), and — more
+  importantly — the Copilot session's `workingDirectory` was set to the
+  agent's own folder, meaning the model's file-editing tools could never
+  actually reach `/frontend`, `/backend`, or `/legacy` at all. Both now
+  use a shared `PROJECT_ROOT` (the parent of `/agent`, i.e. wherever
+  `/agent`, `/frontend`, `/backend`, `/legacy` all live side by side).
+
+- **Fixed a hang on long tasks:** the SDK's `sendAndWait()` has a flat 60s
+  timeout that doesn't reset while the assistant is actively working - a
+  task like "read every file in /legacy" easily takes longer than that,
+  threw an uncaught error, and killed the whole input loop (so the CLI
+  looked hung and stopped responding even to `/status`). `chat.ts` now
+  drives the session itself with an inactivity timeout that resets on
+  every event, and every command is wrapped so one failure just prints an
+  error and re-prompts instead of taking the whole process down. A failed
+  task is not marked complete, so running `/migrate` again simply retries it.
 
 ## Directory layout
 

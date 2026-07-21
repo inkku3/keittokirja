@@ -84,106 +84,15 @@ export class CookbookAgent {
                 break;
             }
 
-            if (input === COMMANDS.help) {
-                this.printHelp();
-                continue;
+            try {
+                await this.handleInput(input, { chat, planner, executor, workflow });
             }
-
-            if (input.startsWith(COMMANDS.plan)) {
-                const goal = input.slice(COMMANDS.plan.length).trim();
-
-                if (!goal) {
-                    console.log(`Usage: ${COMMANDS.plan} <goal description>`);
-                    continue;
-                }
-
+            catch (err) {
                 console.log("");
-                console.log("Planning...");
-
-                const plan = await workflow.initialize(goal);
-
+                console.log(`Error: ${err instanceof Error ? err.message : String(err)}`);
+                console.log("Nothing was lost - your plan/progress is unaffected. Try again, or /status to check state.");
                 console.log("");
-                console.log("Plan:");
-                plan.forEach(step => console.log(`  ${step}`));
-                console.log("");
-
-                await this.saveCheckpoint();
-                continue;
             }
-
-            if (input === COMMANDS.migrate) {
-
-                if (this.state.get().plan.length === 0) {
-                    console.log(`No plan yet. Use ${COMMANDS.plan} <goal> first.`);
-                    continue;
-                }
-
-                let result = await workflow.runNextTask();
-
-                while (result) {
-
-                    this.history.add({
-                        task: result.task,
-                        summary: result.answer.slice(0, 500),
-                        success: true,
-                        timestamp: new Date()
-                    });
-
-                    await this.saveCheckpoint();
-
-                    result = await workflow.runNextTask();
-                }
-
-                console.log("Migration complete.");
-                console.log("");
-                continue;
-            }
-
-            if (input === COMMANDS.status) {
-                const s = this.state.get();
-
-                console.log("");
-                console.log(`Goal:     ${s.goal || "(none set)"}`);
-                console.log(`Progress: ${s.completed.length}/${s.plan.length} tasks`);
-
-                if (s.plan.length > 0 && s.currentTask < s.plan.length) {
-                    console.log(`Next:     ${s.plan[s.currentTask]}`);
-                }
-
-                console.log("");
-                continue;
-            }
-
-            if (input === COMMANDS.reset) {
-                this.state.reset();
-                this.history.entries = [];
-                await checkpoint.remove();
-                console.log("State and history cleared.");
-                console.log("");
-                continue;
-            }
-
-            if (input === COMMANDS.build) {
-                console.log("");
-                console.log("Building frontend...");
-                const feResult = await executor.buildFrontend();
-                console.log(feResult.output.trim() || "(no output)");
-                console.log(feResult.success ? "Frontend build OK." : "Frontend build FAILED.");
-                console.log("");
-
-                console.log("Testing backend...");
-                const beResult = await executor.buildBackend();
-                console.log(beResult.output.trim() || "(no output)");
-                console.log(beResult.success ? "Backend tests OK." : "Backend tests FAILED.");
-                console.log("");
-                continue;
-            }
-
-            // Anything else goes straight to the assistant as a free-form message.
-            console.log("");
-            const answer = await chat.send(input);
-            console.log(answer);
-            console.log("");
 
         }
 
@@ -195,6 +104,129 @@ export class CookbookAgent {
 
         await this.client.stop();
 
+    }
+
+    private async handleInput(
+        input: string,
+        deps: { chat: Chat; planner: Planner; executor: Executor; workflow: Workflow }
+    ) {
+
+        const { chat, executor, workflow } = deps;
+
+        if (input === COMMANDS.help) {
+            this.printHelp();
+            return;
+        }
+
+        if (input.startsWith(COMMANDS.plan)) {
+            const goal = input.slice(COMMANDS.plan.length).trim();
+
+            if (!goal) {
+                console.log(`Usage: ${COMMANDS.plan} <goal description>`);
+                return;
+            }
+
+            console.log("");
+            console.log("Planning...");
+
+            const plan = await workflow.initialize(goal);
+
+            console.log("");
+            console.log("Plan:");
+            plan.forEach(step => console.log(`  ${step}`));
+            console.log("");
+
+            await this.saveCheckpoint();
+            return;
+        }
+
+        if (input === COMMANDS.migrate) {
+
+            if (this.state.get().plan.length === 0) {
+                console.log(`No plan yet. Use ${COMMANDS.plan} <goal> first.`);
+                return;
+            }
+
+            while (!workflow.isDone()) {
+
+                try {
+                    const result = await workflow.runNextTask();
+
+                    if (!result) {
+                        break;
+                    }
+
+                    this.history.add({
+                        task: result.task,
+                        summary: result.answer.slice(0, 500),
+                        success: true,
+                        timestamp: new Date()
+                    });
+
+                    await this.saveCheckpoint();
+                }
+                catch (err) {
+                    // The failing task was NOT marked finished, so state.currentTask
+                    // still points at it - running /migrate again retries just that task.
+                    console.log("");
+                    console.log(`Task failed: ${err instanceof Error ? err.message : String(err)}`);
+                    console.log("Progress on earlier tasks is saved. Run /migrate again to retry this task.");
+                    console.log("");
+                    return;
+                }
+
+            }
+
+            console.log("Migration complete.");
+            console.log("");
+            return;
+        }
+
+        if (input === COMMANDS.status) {
+            const s = this.state.get();
+
+            console.log("");
+            console.log(`Goal:     ${s.goal || "(none set)"}`);
+            console.log(`Progress: ${s.completed.length}/${s.plan.length} tasks`);
+
+            if (s.plan.length > 0 && s.currentTask < s.plan.length) {
+                console.log(`Next:     ${s.plan[s.currentTask]}`);
+            }
+
+            console.log("");
+            return;
+        }
+
+        if (input === COMMANDS.reset) {
+            this.state.reset();
+            this.history.entries = [];
+            await checkpoint.remove();
+            console.log("State and history cleared.");
+            console.log("");
+            return;
+        }
+
+        if (input === COMMANDS.build) {
+            console.log("");
+            console.log("Building frontend...");
+            const feResult = await executor.buildFrontend();
+            console.log(feResult.output.trim() || "(no output)");
+            console.log(feResult.success ? "Frontend build OK." : "Frontend build FAILED.");
+            console.log("");
+
+            console.log("Testing backend...");
+            const beResult = await executor.buildBackend();
+            console.log(beResult.output.trim() || "(no output)");
+            console.log(beResult.success ? "Backend tests OK." : "Backend tests FAILED.");
+            console.log("");
+            return;
+        }
+
+        // Anything else goes straight to the assistant as a free-form message.
+        console.log("");
+        const answer = await chat.send(input);
+        console.log(answer);
+        console.log("");
     }
 
     private printHelp() {

@@ -1,9 +1,140 @@
 {
   "state": {
-    "goal": "",
-    "plan": [],
-    "currentTask": 0,
-    "completed": []
+    "goal": "Read every file in /legacy (index.html, styles.css, script.js, recipelookup.js, search.js, darkmode.js, the full contents of recipes/, site.webmanifest, and the favicon/fallback assets). Produce a written inventory describing: what each script does, what DOM elements/IDs/classes they depend on, what data format recipes/ actually contains, and how the files reference each other. Make no code changes.",
+    "plan": [
+      "Based on my review of all files in /legacy, here is the numbered implementation plan:",
+      "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
+      "2. Document **script.js** functionality: Firebase initialization, recipe list loading from Firestore, sorting recipes alphabetically, search filtering, menu toggle logic (toggleMenu function)",
+      "3. Document **script.js** DOM dependencies: elements #recipes, #search, #myNav, .menu-icon, .overlay-content, #recipeMenu, with event listeners on search input and toggleMenu",
+      "4. Document **recipelookup.js** functionality: loads individual recipe from Firebase by URL pathname, renders title/info/ingredients/instructions into HTML elements, handles image fallback (png → jpg → jpeg), manages recipe detail page display",
+      "5. Document **recipelookup.js** DOM dependencies: elements #header, #info, #ingredients, #instructions, #image with pre-formatted content rendering",
+      "6. Document **search.js** functionality: recipe list initialization, search/filter by name, \"random recipe\" feature, sorting/tag filtering system with recipe.tags property (comma-separated values)",
+      "7. Document **search.js** DOM dependencies: elements #recipes, #search, #randomRecipe, #recipeMenu, sort buttons (.sortButtons), dropdown (#myDropdown), with state tracking via sortStates and sortTags objects",
+      "8. Document **darkmode.js** functionality: toggles dark-mode CSS class on body, persists preference to localStorage, updates button text between \"Tumma tila\"/\"Vaalea tila\" (Finnish: Dark/Light mode)",
+      "9. Document **darkmode.js** DOM dependencies: element #toggleDark button, body element for class toggling, localStorage for state persistence",
+      "10. Document **styles.css** color scheme: light mode (white background, black text), dark mode (#121212 background, white text), layout uses flexbox/grid for recipe details, responsive design with mobile breakpoint at 768px",
+      "11. Document **recipe data format**: Firebase Firestore collection structure with recipe documents containing fields: title (string), ingredients (multiline text), instructions (multiline text), info (description text), tags (comma-separated values like \"main,kana,kastike\")",
+      "12. Document **recipes/ directory structure**: contains recipe-template.html (template for recipe detail pages) and img/ subfolder (recipe images indexed by recipe document ID with .png/.jpg/.jpeg extensions)",
+      "13. Document **file interconnections**: index.html loads script.js + darkmode.js; script.js and search.js both fetch from Firestore and populate #recipes/#recipeMenu; recipelookup.js loads from URL pathname to display recipe details; darkmode.js attaches to #toggleDark button; all use styles.css",
+      "14. Document **site.webmanifest** structure: PWA manifest with app name/icons (android-chrome-192x192.png, android-chrome-512x512.png) and display mode \"standalone\"",
+      "15. Document **favicon assets**: favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png, fallback.png for PWA/browser icon support (referenced in index.html head)"
+    ],
+    "currentTask": 16,
+    "completed": [
+      "Based on my review of all files in /legacy, here is the numbered implementation plan:",
+      "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
+      "2. Document **script.js** functionality: Firebase initialization, recipe list loading from Firestore, sorting recipes alphabetically, search filtering, menu toggle logic (toggleMenu function)",
+      "3. Document **script.js** DOM dependencies: elements #recipes, #search, #myNav, .menu-icon, .overlay-content, #recipeMenu, with event listeners on search input and toggleMenu",
+      "4. Document **recipelookup.js** functionality: loads individual recipe from Firebase by URL pathname, renders title/info/ingredients/instructions into HTML elements, handles image fallback (png → jpg → jpeg), manages recipe detail page display",
+      "5. Document **recipelookup.js** DOM dependencies: elements #header, #info, #ingredients, #instructions, #image with pre-formatted content rendering",
+      "6. Document **search.js** functionality: recipe list initialization, search/filter by name, \"random recipe\" feature, sorting/tag filtering system with recipe.tags property (comma-separated values)",
+      "7. Document **search.js** DOM dependencies: elements #recipes, #search, #randomRecipe, #recipeMenu, sort buttons (.sortButtons), dropdown (#myDropdown), with state tracking via sortStates and sortTags objects",
+      "8. Document **darkmode.js** functionality: toggles dark-mode CSS class on body, persists preference to localStorage, updates button text between \"Tumma tila\"/\"Vaalea tila\" (Finnish: Dark/Light mode)",
+      "9. Document **darkmode.js** DOM dependencies: element #toggleDark button, body element for class toggling, localStorage for state persistence",
+      "10. Document **styles.css** color scheme: light mode (white background, black text), dark mode (#121212 background, white text), layout uses flexbox/grid for recipe details, responsive design with mobile breakpoint at 768px",
+      "11. Document **recipe data format**: Firebase Firestore collection structure with recipe documents containing fields: title (string), ingredients (multiline text), instructions (multiline text), info (description text), tags (comma-separated values like \"main,kana,kastike\")",
+      "12. Document **recipes/ directory structure**: contains recipe-template.html (template for recipe detail pages) and img/ subfolder (recipe images indexed by recipe document ID with .png/.jpg/.jpeg extensions)",
+      "13. Document **file interconnections**: index.html loads script.js + darkmode.js; script.js and search.js both fetch from Firestore and populate #recipes/#recipeMenu; recipelookup.js loads from URL pathname to display recipe details; darkmode.js attaches to #toggleDark button; all use styles.css",
+      "14. Document **site.webmanifest** structure: PWA manifest with app name/icons (android-chrome-192x192.png, android-chrome-512x512.png) and display mode \"standalone\"",
+      "15. Document **favicon assets**: favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png, fallback.png for PWA/browser icon support (referenced in index.html head)"
+    ]
   },
-  "history": []
+  "history": [
+    {
+      "task": "Based on my review of all files in /legacy, here is the numbered implementation plan:",
+      "summary": "Based on my review of all files in /legacy, here is the numbered implementation plan:\n\n1. Document index.html structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu elements\n2. Document script.js functionality: Firebase initialization, recipe list loading from Firestore, sorting recipes alphabetically, search filtering, and menu toggle logic\n3. Document script.js DOM dependencies: elements #rec",
+      "success": true,
+      "timestamp": "2026-07-21T08:46:43.370Z"
+    },
+    {
+      "task": "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
+      "summary": "✅ **Step 1 complete.** Documented index.html structure with:\n- Menu system (#myNav, .menu-icon, .overlay-content, #myDropdown)\n- Sort/filter buttons and categories\n- Search input (#search) and recipe list (#recipes)\n- Buttons (#toggleDark, #randomRecipe)\n- All DOM dependencies and event handlers\n- CSS classes and interactions\n\nReady for Step 2?",
+      "success": true,
+      "timestamp": "2026-07-21T08:47:06.073Z"
+    },
+    {
+      "task": "2. Document **script.js** functionality: Firebase initialization, recipe list loading from Firestore, sorting recipes alphabetically, search filtering, menu toggle logic (toggleMenu function)",
+      "summary": "✅ **Step 2 complete.** Documented script.js with:\n- Firebase initialization (config, AppCheck, ReCaptcha token)\n- Firestore data loading (`collection(\"recipes\")`, data structure)\n- Alphabetical sorting by name (case-insensitive)\n- Recipe display and rendering function\n- Search filtering logic (case-insensitive, toggles visibility)\n- Menu toggle logic (open/close, dropdown handling, menu population)\n- DOM dependencies and event listeners\n- Identified scoping bug with `filtered` variable in toggle",
+      "success": true,
+      "timestamp": "2026-07-21T08:47:31.962Z"
+    },
+    {
+      "task": "3. Document **script.js** DOM dependencies: elements #recipes, #search, #myNav, .menu-icon, .overlay-content, #recipeMenu, with event listeners on search input and toggleMenu",
+      "summary": "✅ **Step 3 complete.** Documented script.js DOM dependencies with:\n- Element reference map (6 primary elements)\n- Detailed interaction flow for each element (selectors, operations, CSS effects)\n- Event listener breakdown (search \"input\", menu toggle \"click\")\n- Closure variable capture for event listeners\n- Lifecycle & initialization order\n- Interaction matrix (user action → event → DOM changes)\n- Identified potential conflicts with search.js\n\nReady for Step 4?",
+      "success": true,
+      "timestamp": "2026-07-21T08:48:09.077Z"
+    },
+    {
+      "task": "4. Document **recipelookup.js** functionality: loads individual recipe from Firebase by URL pathname, renders title/info/ingredients/instructions into HTML elements, handles image fallback (png → jpg → jpeg), manages recipe detail page display",
+      "summary": "✅ **Step 4 complete.** Documented recipelookup.js with:\n- Firebase module imports (doc, getDoc for single document)\n- URL pathname parsing to extract recipe ID\n- Firestore document loading and data extraction\n- HTML element rendering (#header, #info, #ingredients, #instructions, #image)\n- Image fallback chain (PNG → JPG → JPEG) with error handler\n- Error handling for missing recipes\n- DOMContentLoaded trigger\n- Console logging for debugging\n- Template file requirements\n- Data flow diagram\n- Perf",
+      "success": true,
+      "timestamp": "2026-07-21T08:48:43.150Z"
+    },
+    {
+      "task": "5. Document **recipelookup.js** DOM dependencies: elements #header, #info, #ingredients, #instructions, #image with pre-formatted content rendering",
+      "summary": "✅ **Step 5 complete.** Documented recipelookup.js DOM dependencies with:\n- Element reference map (5 elements)\n- Detailed interaction for each element (#header, #info, #ingredients, #instructions, #image)\n- Complete CSS styling (light/dark modes, responsive)\n- Pre-formatted content rendering explanation (why `<pre>` tag, data format)\n- Content injection patterns with examples\n- Image loading fallback flow\n- DOM dependency chain\n- CSS class hierarchy\n- Error states and fallback rendering\n- Perform",
+      "success": true,
+      "timestamp": "2026-07-21T08:49:31.366Z"
+    },
+    {
+      "task": "6. Document **search.js** functionality: recipe list initialization, search/filter by name, \"random recipe\" feature, sorting/tag filtering system with recipe.tags property (comma-separated values)",
+      "summary": "✅ **Step 6 complete.** Documented search.js with:\n- Recipe list initialization and DOMContentLoaded trigger\n- Firebase setup and Firestore query (retrieves name, url, tags)\n- Search/filter by name functionality\n- Random recipe feature (getRandomRecipe function)\n- Tag-based filtering system:\n  - sortStates object (16 boolean toggles)\n  - sortTags mapping (state key → Firestore tag)\n  - Sort button click handler (toggle + update UI)\n  - menuContent filtering logic (AND logic for multiple tags)\n- M",
+      "success": true,
+      "timestamp": "2026-07-21T08:50:21.212Z"
+    },
+    {
+      "task": "7. Document **search.js** DOM dependencies: elements #recipes, #search, #randomRecipe, #recipeMenu, sort buttons (.sortButtons), dropdown (#myDropdown), with state tracking via sortStates and sortTags objects",
+      "summary": "Step 7 complete. Created detailed documentation of **search.js DOM dependencies** covering:\n\n- **6 DOM elements** with selectors, CSS styling, operations, state tracking\n- **Event listeners** for search input, random button, and 16 sort buttons\n- **State tracking** via sortStates and sortTags objects\n- **Interaction flows** showing how user actions cascade through state mutations\n- **Data flow** from search input to filtered display\n\nFile saved: `07-search-js-dom-dependencies.md` (25.9 KB)\n\nRead",
+      "success": true,
+      "timestamp": "2026-07-21T08:58:02.491Z"
+    },
+    {
+      "task": "8. Document **darkmode.js** functionality: toggles dark-mode CSS class on body, persists preference to localStorage, updates button text between \"Tumma tila\"/\"Vaalea tila\" (Finnish: Dark/Light mode)",
+      "summary": "Step 8 complete. Created detailed documentation of **darkmode.js functionality** covering:\n\n- **Module-level state** (darkModeState variable, localStorage persistence)\n- **Core functions** (toggleDarkMode, darkMode with full behavioral flows)\n- **Initialization sequence** (DOMContentLoaded, state application)\n- **CSS integration** (dark-mode class, styling patterns)\n- **localStorage mechanism** (string conversion, persistence patterns)\n- **Button interaction** (text updates, click handling)\n- **",
+      "success": true,
+      "timestamp": "2026-07-21T08:58:51.730Z"
+    },
+    {
+      "task": "9. Document **darkmode.js** DOM dependencies: element #toggleDark button, body element for class toggling, localStorage for state persistence",
+      "summary": "Step 9 complete. Created detailed documentation of **darkmode.js DOM dependencies** covering:\n\n- **DOM elements** (#toggleDark button, body element) with selectors, CSS styling, operations\n- **Button operations** (get reference, update text for dark/light modes, attach click handler)\n- **Body element operations** (add/remove \"dark-mode\" class, CSS scope, styling responsiveness)\n- **Event handler attachment** (DOMContentLoaded, button click)\n- **localStorage integration** (storage operations, dat",
+      "success": true,
+      "timestamp": "2026-07-21T08:59:55.145Z"
+    },
+    {
+      "task": "10. Document **styles.css** color scheme: light mode (white background, black text), dark mode (#121212 background, white text), layout uses flexbox/grid for recipe details, responsive design with mobile breakpoint at 768px",
+      "summary": "Step 10 complete. Created detailed documentation of **styles.css layout & theme system** covering:\n\n- **Light mode color palette** (white backgrounds, black text, all specific hex values)\n- **Dark mode color palette** (dark backgrounds, white text, all overrides)\n- **Flexbox layouts** (buttons, hero, menu, recipes - with purpose & usage)\n- **Grid layouts** (2-column recipe detail grid with 1fr/1.8fr ratio)\n- **Responsive design** (768px breakpoint, mobile adjustments, stacking)\n- **Responsive ty",
+      "success": true,
+      "timestamp": "2026-07-21T09:00:57.562Z"
+    },
+    {
+      "task": "11. Document **recipe data format**: Firebase Firestore collection structure with recipe documents containing fields: title (string), ingredients (multiline text), instructions (multiline text), info (description text), tags (comma-separated values like \"main,kana,kastike\")",
+      "summary": "Step 11 complete. Created detailed documentation of **recipe data format** covering:\n\n- **Firestore collection structure** (collection name, document ID format, field specification)\n- **All 5 fields** (title, ingredients, instructions, info, tags) with types, examples, rendering patterns\n- **Tags system** (16 category mappings, comma-separated storage, AND-logic filtering)\n- **Complete document example** (chicken-tikka-masala with all fields)\n- **Use cases** (list loading, individual lookup, sea",
+      "success": true,
+      "timestamp": "2026-07-21T09:01:57.981Z"
+    },
+    {
+      "task": "12. Document **recipes/ directory structure**: contains recipe-template.html (template for recipe detail pages) and img/ subfolder (recipe images indexed by recipe document ID with .png/.jpg/.jpeg extensions)",
+      "summary": "Step 12 complete. Created detailed documentation of **recipes/ directory structure** covering:\n\n- **Directory overview** (structure, file counts, total size ~65MB)\n- **recipe-template.html** (HTML structure, head/body, placeholder elements, script loading)\n- **Template rendering flow** (how URL → Firestore query → populated page works)\n- **Single page architecture** (one template serves all recipe URLs)\n- **Base href explanation** (how relative paths resolve)\n- **img/ subfolder** (purpose, path,",
+      "success": true,
+      "timestamp": "2026-07-21T09:03:04.500Z"
+    },
+    {
+      "task": "13. Document **file interconnections**: index.html loads script.js + darkmode.js; script.js and search.js both fetch from Firestore and populate #recipes/#recipeMenu; recipelookup.js loads from URL pathname to display recipe details; darkmode.js attaches to #toggleDark button; all use styles.css",
+      "summary": "Step 13 complete. Created detailed documentation of **file interconnections & dependencies** covering:\n\n- **File dependency graph** (visual overview of all file relationships)\n- **Main page (index.html)** (loaded scripts, DOM elements, data flow)\n- **Recipe detail pages** (loaded scripts, DOM elements, data flow)\n- **Complete dependency matrix** (all files and their dependencies by type)\n- **Data dependencies** (Firestore collections, transformations, structure)\n- **DOM dependencies** (which scr",
+      "success": true,
+      "timestamp": "2026-07-21T09:06:09.896Z"
+    },
+    {
+      "task": "14. Document **site.webmanifest** structure: PWA manifest with app name/icons (android-chrome-192x192.png, android-chrome-512x512.png) and display mode \"standalone\"",
+      "summary": "Step 14 complete. Created detailed documentation of **site.webmanifest PWA configuration** covering:\n\n- **Web manifest standard** (W3C spec, browser support, purpose)\n- **All 6 JSON fields** (name, short_name, icons, theme_color, background_color, display)\n- **Icon specifications** (192×192, 512×512 with sizes, types, usage)\n- **Icon browser fallback** (selection logic, size usage by device)\n- **Related icon files** (apple-touch-icon, favicons - HTML links, not in manifest)\n- **PWA installation ",
+      "success": true,
+      "timestamp": "2026-07-21T09:07:03.873Z"
+    },
+    {
+      "task": "15. Document **favicon assets**: favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png, fallback.png for PWA/browser icon support (referenced in index.html head)",
+      "summary": "Step 15 complete! Created detailed documentation of **favicon & asset structure** covering:\n\n- **favicon.ico** (Windows/legacy, ICO format, 15.4 KB, multiple embedded sizes)\n- **favicon-32x32.png** (modern browsers, 869 B, standard tab icon)\n- **favicon-16x16.png** (small contexts, 404 B, legacy fallback)\n- **apple-touch-icon.png** (iOS, 180×180, 6.8 KB, home screen)\n- **fallback.png** (recipe image fallback, 342.4 KB, placeholder image)\n- **HTML references** (complete `<link>` tags in index.htm",
+      "success": true,
+      "timestamp": "2026-07-21T09:08:00.012Z"
+    }
+  ]
 }
