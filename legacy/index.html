@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      <title>Keittokirja inkku.xyz</title>
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<base href="/">
+<link rel="stylesheet" href="styles.css?version=1.1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+
+
+<body>
+    <div class="content">
+
+    <div class="menu-icon" onclick="toggleMenu()">
+        <span class="bar1"></span>
+        <span class="bar2"></span>
+        <span class="bar3"></span>
+    </div>
+
+    <div id="myNav" class="overlay-menu">
+        <span class="close-btn" onclick="toggleMenu()">&times;</span>
+        <div class="overlay-content">
+
+
+
+            <div class="dropdown">
+              <button onclick="toggleSortMenu()" class="dropbtn">Suodata</button>
+                <div id="myDropdown" class="dropdown-content">
+
+            <button class="sortButtons" id="main">pääruoka</button>
+            <button class="sortButtons" id="side">lisuke</button>
+            <button class="sortButtons" id="dessert">jälkiruoka</button>
+            <button class="sortButtons" id="soup">keitto</button>
+
+
+            <button class="sortButtons" id="chicken">kana</button>
+            <button class="sortButtons" id="duck">ankka</button>
+            <button class="sortButtons" id="beef">nauta</button>
+            <button class="sortButtons" id="fish">merenelävä</button>
+            <button class="sortButtons" id="mince">jauheliha</button>
+            <button class="sortButtons" id="lamb">lammas</button>
+            <button class="sortButtons" id="pork">sika</button>
+            <button class="sortButtons" id="veggie">kasvis</button>
+
+            <button class="sortButtons" id="sauce">kastike</button>
+            <button class="sortButtons" id="marinade">marinadi</button>
+            <button class="sortButtons" id="essay">essee</button>
+        </div></div>
+      
+      
+
+          <div class="recipeMenu" id="recipeMenu">
+          </div>
+        </div>
+    </div>
+
+
+        <div class="home">
+        <div class="main-header">KEITTOKIRJA</div>
+        <div class="search-wrapper">
+        <div class="search-container">
+        <input id="search" type="text" placeholder="Ladataan reseptejä..."></div>
+        <div class="recipelist" id="recipes"></div></div>
+    </div>
+        <div class="buttons">
+            <button class="toggleDark" id="toggleDark">Tumma tila</button>
+            <button class="random-recipe" id="randomRecipe" type="button">Yllätysresepti</button></div>
+    <div class="bottom-header">keittokirjaa ylläpitää @inkku2 (discord)</div>
+<script type="module" src="search.js"></script> 
+<script type="module" src="darkmode.js"></script> 
+</body>
+<script>
+function toggleSortMenu() {
+  document.getElementById("myDropdown").classList.toggle("show");
+};
+</script>
+</html>
