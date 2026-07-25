@@ -1,15 +1,16 @@
-import styles from './components.module.css'
+import { HamburgerMenu } from './HamburgerMenu';
 
 interface HeaderProps {
-  onMenuToggle?: () => void;
+  onMenuToggle?: (isOpen: boolean) => void;
+  isMenuOpen?: boolean;
 }
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuToggle, isMenuOpen = false }: HeaderProps) {
   return (
-    <div className={`${styles.menuIcon} menu-icon`} onClick={onMenuToggle}>
-      <span className={`${styles.bar} ${styles.bar1} bar1`}></span>
-      <span className={`${styles.bar} ${styles.bar2} bar2`}></span>
-      <span className={`${styles.bar} ${styles.bar3} bar3`}></span>
-    </div>
-  )
+    <HamburgerMenu
+      isOpen={isMenuOpen}
+      onToggle={onMenuToggle}
+    />
+  );
 }
+

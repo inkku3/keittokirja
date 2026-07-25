@@ -5,5 +5,6 @@ export const COMMANDS = {
     migrate: "/migrate",
     status: "/status",
     reset: "/reset",
-    build: "/build"
+    build: "/build",
+    skip: "/skip"
 };

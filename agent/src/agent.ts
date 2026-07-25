@@ -139,7 +139,26 @@ export class CookbookAgent {
             await this.saveCheckpoint();
             return;
         }
+        if (input === COMMANDS.skip) {
+            const skipped = this.state.skipTask();
 
+            if (!skipped) {
+                console.log("Nothing to skip.");
+                return;
+            }
+
+            this.history.add({
+                task: skipped,
+                summary: "(skipped by user)",
+                             success: false,
+                             timestamp: new Date()
+            });
+
+            await this.saveCheckpoint();
+            console.log(`Skipped: ${skipped}`);
+            console.log("");
+            return;
+        }
         if (input === COMMANDS.migrate) {
 
             if (this.state.get().plan.length === 0) {

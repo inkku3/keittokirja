@@ -1,30 +1,14 @@
 import { SearchBar } from './SearchBar'
+import { ActionButtons } from './ActionButtons'
 
-interface MainContentProps {
-  onToggleDark?: () => void;
-  onRandomRecipe?: () => void;
-}
-
-export function MainContent({ onToggleDark, onRandomRecipe }: MainContentProps) {
+export function MainContent() {
   return (
     <div className="home">
       <div className="main-header">KEITTOKIRJA</div>
 
-      <SearchBar placeholder="Ladataan reseptejä..." />
+      <SearchBar placeholder="Etsi reseptejä..." />
 
-      <div className="buttons">
-        <button className="toggleDark" id="toggleDark" onClick={onToggleDark}>
-          Tumma tila
-        </button>
-        <button 
-          className="random-recipe" 
-          id="randomRecipe" 
-          type="button"
-          onClick={onRandomRecipe}
-        >
-          Yllätysresepti
-        </button>
-      </div>
+      <ActionButtons />
     </div>
   )
 }
