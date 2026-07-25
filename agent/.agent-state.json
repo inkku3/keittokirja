@@ -1,25 +1,34 @@
 {
   "state": {
-    "goal": "Read every file in /legacy (index.html, styles.css, script.js, recipelookup.js, search.js, darkmode.js, the full contents of recipes/, site.webmanifest, and the favicon/fallback assets). Produce a written inventory describing: what each script does, what DOM elements/IDs/classes they depend on, what data format recipes/ actually contains, and how the files reference each other. Make no code changes.",
+    "goal": "Using the inventory, recreate index.html's structure and styles.css as a React + TypeScript app shell in /frontend, matching the current layout, fonts, colors, and spacing exactly. Copy over favicon.ico, favicon-16x16.png, favicon-32x32.png, fallback.png, and site.webmanifest so the PWA metadata is identical. Do not implement search, recipe lookup, or dark mode yet - static markup only.",
     "plan": [
-      "Based on my review of all files in /legacy, here is the numbered implementation plan:",
-      "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
-      "2. Document **script.js** functionality: Firebase initialization, recipe list loading from Firestore, sorting recipes alphabetically, search filtering, menu toggle logic (toggleMenu function)",
-      "3. Document **script.js** DOM dependencies: elements #recipes, #search, #myNav, .menu-icon, .overlay-content, #recipeMenu, with event listeners on search input and toggleMenu",
-      "4. Document **recipelookup.js** functionality: loads individual recipe from Firebase by URL pathname, renders title/info/ingredients/instructions into HTML elements, handles image fallback (png → jpg → jpeg), manages recipe detail page display",
-      "5. Document **recipelookup.js** DOM dependencies: elements #header, #info, #ingredients, #instructions, #image with pre-formatted content rendering",
-      "6. Document **search.js** functionality: recipe list initialization, search/filter by name, \"random recipe\" feature, sorting/tag filtering system with recipe.tags property (comma-separated values)",
-      "7. Document **search.js** DOM dependencies: elements #recipes, #search, #randomRecipe, #recipeMenu, sort buttons (.sortButtons), dropdown (#myDropdown), with state tracking via sortStates and sortTags objects",
-      "8. Document **darkmode.js** functionality: toggles dark-mode CSS class on body, persists preference to localStorage, updates button text between \"Tumma tila\"/\"Vaalea tila\" (Finnish: Dark/Light mode)",
-      "9. Document **darkmode.js** DOM dependencies: element #toggleDark button, body element for class toggling, localStorage for state persistence",
-      "10. Document **styles.css** color scheme: light mode (white background, black text), dark mode (#121212 background, white text), layout uses flexbox/grid for recipe details, responsive design with mobile breakpoint at 768px",
-      "11. Document **recipe data format**: Firebase Firestore collection structure with recipe documents containing fields: title (string), ingredients (multiline text), instructions (multiline text), info (description text), tags (comma-separated values like \"main,kana,kastike\")",
-      "12. Document **recipes/ directory structure**: contains recipe-template.html (template for recipe detail pages) and img/ subfolder (recipe images indexed by recipe document ID with .png/.jpg/.jpeg extensions)",
-      "13. Document **file interconnections**: index.html loads script.js + darkmode.js; script.js and search.js both fetch from Firestore and populate #recipes/#recipeMenu; recipelookup.js loads from URL pathname to display recipe details; darkmode.js attaches to #toggleDark button; all use styles.css",
-      "14. Document **site.webmanifest** structure: PWA manifest with app name/icons (android-chrome-192x192.png, android-chrome-512x512.png) and display mode \"standalone\"",
-      "15. Document **favicon assets**: favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png, fallback.png for PWA/browser icon support (referenced in index.html head)"
+      "Based on my documentation inventory, here's the numbered implementation plan for the React + TypeScript app shell:",
+      "1. Create React + TypeScript project structure in /frontend with Vite/Create React App (tsconfig.json, package.json, src/ tree)",
+      "2. Recreate public/index.html head section with favicon links, apple-touch-icon, site.webmanifest link, and meta tags matching legacy",
+      "3. Copy favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png to /frontend/public/",
+      "4. Copy fallback.png to /frontend/public/fallback.png for recipe image fallback",
+      "5. Copy site.webmanifest to /frontend/public/ with unchanged PWA metadata",
+      "6. Create App.tsx root component matching legacy page layout structure",
+      "7. Create Header component with .menu-icon and #myNav navigation bar structure",
+      "8. Create Navigation component with #myNav menu items (Reseptit link and #toggleDark button)",
+      "9. Create SearchBar component rendering #search input element with placeholder",
+      "10. Create MainContent component with .content-container grid layout (1fr 1.8fr on desktop, single column on mobile)",
+      "11. Create RecipeListContainer component rendering #recipes div placeholder (vertical list layout)",
+      "12. Create SidebarMenu component rendering .overlay-menu and .overlay-content overlay structure",
+      "13. Recreate all colors from styles.css in CSS variables (light mode: white bg #ffffff, text #000000; dark mode: #121212, white text)",
+      "14. Recreate all typography from styles.css (font families, font-sizes with clamp(), font-weights, line-heights)",
+      "15. Recreate all spacing/padding from styles.css (gap values, margin/padding scales, button dimensions)",
+      "16. Implement flexbox/grid layouts from styles.css (.content-container grid, recipe list flex, nav flex direction)",
+      "17. Recreate responsive design rules from styles.css (@media 768px breakpoint, switching grid → block layout)",
+      "18. Add dark-mode CSS class selectors to all styled components (body.dark-mode overrides, transition all 0.2s ease)",
+      "19. Create global.css matching styles.css color palette, fonts, and spacing without any scripts attached",
+      "20. Set up CSS module structure for component scoping or Tailwind/CSS-in-JS for consistency with legacy styles",
+      "21. Create placeholder buttons (#randomRecipe, #toggleDark) with correct styling, no event handlers",
+      "22. Test app shell renders with correct layout (desktop grid 2-column, mobile single column at 768px breakpoint)",
+      "23. Verify favicon appears in browser tab, apple-touch-icon would work on iOS, manifest loads without errors",
+      "24. Compare pixel-by-pixel layout screenshot of React app vs legacy in browser (dimensions, spacing, colors, typography match)"
     ],
-    "currentTask": 16,
+    "currentTask": 20,
     "completed": [
       "Based on my review of all files in /legacy, here is the numbered implementation plan:",
       "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
@@ -36,7 +45,27 @@
       "12. Document **recipes/ directory structure**: contains recipe-template.html (template for recipe detail pages) and img/ subfolder (recipe images indexed by recipe document ID with .png/.jpg/.jpeg extensions)",
       "13. Document **file interconnections**: index.html loads script.js + darkmode.js; script.js and search.js both fetch from Firestore and populate #recipes/#recipeMenu; recipelookup.js loads from URL pathname to display recipe details; darkmode.js attaches to #toggleDark button; all use styles.css",
       "14. Document **site.webmanifest** structure: PWA manifest with app name/icons (android-chrome-192x192.png, android-chrome-512x512.png) and display mode \"standalone\"",
-      "15. Document **favicon assets**: favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png, fallback.png for PWA/browser icon support (referenced in index.html head)"
+      "15. Document **favicon assets**: favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png, fallback.png for PWA/browser icon support (referenced in index.html head)",
+      "Based on my documentation inventory, here's the numbered implementation plan for the React + TypeScript app shell:",
+      "1. Create React + TypeScript project structure in /frontend with Vite/Create React App (tsconfig.json, package.json, src/ tree)",
+      "2. Recreate public/index.html head section with favicon links, apple-touch-icon, site.webmanifest link, and meta tags matching legacy",
+      "3. Copy favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png to /frontend/public/",
+      "4. Copy fallback.png to /frontend/public/fallback.png for recipe image fallback",
+      "5. Copy site.webmanifest to /frontend/public/ with unchanged PWA metadata",
+      "6. Create App.tsx root component matching legacy page layout structure",
+      "7. Create Header component with .menu-icon and #myNav navigation bar structure",
+      "8. Create Navigation component with #myNav menu items (Reseptit link and #toggleDark button)",
+      "9. Create SearchBar component rendering #search input element with placeholder",
+      "10. Create MainContent component with .content-container grid layout (1fr 1.8fr on desktop, single column on mobile)",
+      "11. Create RecipeListContainer component rendering #recipes div placeholder (vertical list layout)",
+      "12. Create SidebarMenu component rendering .overlay-menu and .overlay-content overlay structure",
+      "13. Recreate all colors from styles.css in CSS variables (light mode: white bg #ffffff, text #000000; dark mode: #121212, white text)",
+      "14. Recreate all typography from styles.css (font families, font-sizes with clamp(), font-weights, line-heights)",
+      "15. Recreate all spacing/padding from styles.css (gap values, margin/padding scales, button dimensions)",
+      "16. Implement flexbox/grid layouts from styles.css (.content-container grid, recipe list flex, nav flex direction)",
+      "17. Recreate responsive design rules from styles.css (@media 768px breakpoint, switching grid → block layout)",
+      "18. Add dark-mode CSS class selectors to all styled components (body.dark-mode overrides, transition all 0.2s ease)",
+      "19. Create global.css matching styles.css color palette, fonts, and spacing without any scripts attached"
     ]
   },
   "history": [
@@ -135,6 +164,126 @@
       "summary": "Step 15 complete! Created detailed documentation of **favicon & asset structure** covering:\n\n- **favicon.ico** (Windows/legacy, ICO format, 15.4 KB, multiple embedded sizes)\n- **favicon-32x32.png** (modern browsers, 869 B, standard tab icon)\n- **favicon-16x16.png** (small contexts, 404 B, legacy fallback)\n- **apple-touch-icon.png** (iOS, 180×180, 6.8 KB, home screen)\n- **fallback.png** (recipe image fallback, 342.4 KB, placeholder image)\n- **HTML references** (complete `<link>` tags in index.htm",
       "success": true,
       "timestamp": "2026-07-21T09:08:00.012Z"
+    },
+    {
+      "task": "Based on my documentation inventory, here's the numbered implementation plan for the React + TypeScript app shell:",
+      "summary": "Got it! The 24-step implementation plan is ready. Here's what it covers:\n\n**Phase 1: Project Setup** (Steps 1-6)\n- React/TypeScript project initialization\n- HTML head with favicon/manifest links\n- Copy favicon assets and PWA manifest\n\n**Phase 2: Component Architecture** (Steps 7-12)\n- Header, Navigation, SearchBar components\n- MainContent layout with grid structure\n- RecipeList and SidebarMenu placeholders\n\n**Phase 3: Styling** (Steps 13-20)\n- CSS variables for light/dark colors\n- Typography (fo",
+      "success": true,
+      "timestamp": "2026-07-21T09:14:03.835Z"
+    },
+    {
+      "task": "1. Create React + TypeScript project structure in /frontend with Vite/Create React App (tsconfig.json, package.json, src/ tree)",
+      "summary": "✅ **Step 1 Complete:** React + TypeScript project initialized with Vite\n\n**Created structure:**\n- `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json` (TypeScript configuration)\n- `package.json` with React, React DOM, TypeScript, Vite dependencies\n- `src/` directory (main.tsx, App.tsx, index.css, App.css)\n- `public/` directory (for assets)\n- `vite.config.ts` (Vite configuration)\n\n**Next: Step 2 - Recreate index.html head section with favicon links and manifest**",
+      "success": true,
+      "timestamp": "2026-07-21T09:14:30.329Z"
+    },
+    {
+      "task": "2. Recreate public/index.html head section with favicon links, apple-touch-icon, site.webmanifest link, and meta tags matching legacy",
+      "summary": "✅ **Step 2 Complete:** Updated /frontend/index.html head section\n\n**Changes made:**\n- Added `<title>Keittokirja inkku.xyz</title>` (matching legacy)\n- Added `<base href=\"/\">` for absolute path resolution\n- Added favicon links:\n  - `favicon.ico` (Windows/legacy)\n  - `favicon-16x16.png` (small contexts)\n  - `favicon-32x32.png` (modern browsers)\n  - `apple-touch-icon.png` (iOS home screen)\n- Added `<link rel=\"manifest\" href=\"/site.webmanifest\" />` (PWA metadata)\n- Added Google Fonts preconnect link",
+      "success": true,
+      "timestamp": "2026-07-21T09:14:56.621Z"
+    },
+    {
+      "task": "3. Copy favicon.ico, favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png to /frontend/public/",
+      "summary": "✅ **Step 3 Complete:** Favicon assets copied to /frontend/public/\n\n**Files copied:**\n- `favicon.ico` (16 KB)\n- `favicon-16x16.png` (404 bytes)\n- `favicon-32x32.png` (869 bytes)\n- `apple-touch-icon.png` (6.8 KB)\n\n**Next: Step 4 - Copy fallback.png to /frontend/public/**",
+      "success": true,
+      "timestamp": "2026-07-21T09:15:06.066Z"
+    },
+    {
+      "task": "4. Copy fallback.png to /frontend/public/fallback.png for recipe image fallback",
+      "summary": "✅ **Step 4 Complete:** fallback.png copied to /frontend/public/\n\n**File copied:**\n- `fallback.png` (335 KB) - will be used as recipe image fallback when PNG/JPG/JPEG variants fail to load\n\n**Next: Step 5 - Copy site.webmanifest to /frontend/public/**",
+      "success": true,
+      "timestamp": "2026-07-21T09:15:12.996Z"
+    },
+    {
+      "task": "5. Copy site.webmanifest to /frontend/public/ with unchanged PWA metadata",
+      "summary": "✅ **Step 5 Complete:** site.webmanifest copied to /frontend/public/\n\n**File copied:**\n- `site.webmanifest` (minified JSON, 213 bytes)\n- Unchanged PWA metadata:\n  - `name`: \"\" (empty - as in legacy)\n  - `short_name`: \"\" (empty - as in legacy)\n  - `icons`: 2 sizes (192×192, 512×512)\n  - `theme_color`: #ffffff (white)\n  - `background_color`: #ffffff (white)\n  - `display`: \"standalone\" (full screen)\n\n**Next: Step 6 - Create App.tsx root component**",
+      "success": true,
+      "timestamp": "2026-07-21T09:15:22.847Z"
+    },
+    {
+      "task": "6. Create App.tsx root component matching legacy page layout structure",
+      "summary": "✅ **Step 6 Complete:** App.tsx root component created matching legacy structure\n\n**Structure includes:**\n- `.content` wrapper\n- Hamburger `.menu-icon` (3 bars)\n- `#myNav.overlay-menu` overlay navigation\n- Filter dropdown with 16 category/protein buttons\n- `#recipeMenu` placeholder\n- `.home` main content section\n- `.main-header` \"KEITTOKIRJA\" title\n- Search input `#search` with dropdown `#recipes`\n- Control buttons: `#toggleDark` (dark mode), `#randomRecipe` (random)\n- `.bottom-header` footer att",
+      "success": true,
+      "timestamp": "2026-07-21T09:15:53.437Z"
+    },
+    {
+      "task": "7. Create Header component with .menu-icon and #myNav navigation bar structure",
+      "summary": "✅ **Step 7 Complete:** Header component created\n\n**Component includes:**\n- `.menu-icon` container with 3 hamburger bars (bar1, bar2, bar3)\n- Optional `onMenuToggle` callback prop for future menu toggle functionality\n- TypeScript interface for type safety\n\n**Next: Step 8 - Create Navigation component with #myNav menu items (filter dropdown + recipe menu)**",
+      "success": true,
+      "timestamp": "2026-07-21T09:16:10.022Z"
+    },
+    {
+      "task": "8. Create Navigation component with #myNav menu items (Reseptit link and #toggleDark button)",
+      "summary": "✅ **Step 8 Complete:** Navigation component created with #myNav overlay menu\n\n**Component includes:**\n- `#myNav.overlay-menu` full-screen overlay container\n- Close button (×) with `onClose` callback\n- Filter dropdown (Suodata button + dropdown menu)\n- 15 filter category buttons (4 categories + 8 proteins + 3 other types)\n- `#recipeMenu` placeholder for recipe list\n- Optional `onToggleSortMenu` callback for filter dropdown toggle\n- `FILTER_CATEGORIES` constant for all 16 button definitions\n\n**Nex",
+      "success": true,
+      "timestamp": "2026-07-21T09:16:22.041Z"
+    },
+    {
+      "task": "9. Create SearchBar component rendering #search input element with placeholder",
+      "summary": "✅ **Step 9 Complete:** SearchBar component created\n\n**Component includes:**\n- `.search-wrapper` and `.search-container` divs matching legacy structure\n- `#search` input with default placeholder \"Ladataan reseptejä...\"\n- Optional `placeholder` prop to change text (e.g., to \"Etsi reseptejä...\" after load)\n- Optional `onChange` callback for future search filtering\n- `#recipes.recipelist` placeholder for dropdown results (initially hidden)\n\n**Next: Step 10 - Create MainContent component with layout*",
+      "success": true,
+      "timestamp": "2026-07-21T09:16:30.876Z"
+    },
+    {
+      "task": "10. Create MainContent component with .content-container grid layout (1fr 1.8fr on desktop, single column on mobile)",
+      "summary": "✅ **Step 10 Complete:** MainContent component created\n\n**Component includes:**\n- `.home` wrapper (main content section, flex column, centered)\n- `.main-header` with \"KEITTOKIRJA\" title\n- `<SearchBar />` component for search input\n- `.buttons` container with 2 buttons:\n  - `#toggleDark` (dark mode toggle)\n  - `#randomRecipe` (random recipe button)\n- Optional `onToggleDark` and `onRandomRecipe` callbacks for future functionality\n\n**Next: Step 11 - Create RecipeListContainer component**",
+      "success": true,
+      "timestamp": "2026-07-21T09:16:55.458Z"
+    },
+    {
+      "task": "11. Create RecipeListContainer component rendering #recipes div placeholder (vertical list layout)",
+      "summary": "✅ **Step 11 Complete:** RecipeListContainer component created\n\n**Component includes:**\n- `#recipes.recipelist` div (positioned absolutely below search, contains recipe results)\n- `Recipe` interface with id, name, and url properties\n- `recipes` prop: array of Recipe objects (default: empty)\n- `isVisible` prop: controls display (flex when visible, hidden otherwise)\n- Maps over recipes to render `<div><a href>` entries matching legacy structure\n- Hidden by default (display: none)\n\n**Next: Step 12 -",
+      "success": true,
+      "timestamp": "2026-07-21T09:17:06.507Z"
+    },
+    {
+      "task": "12. Create SidebarMenu component rendering .overlay-menu and .overlay-content overlay structure",
+      "summary": "Done — SidebarMenu component created and App.tsx updated to use it.\n\nWhat changed:\n- Added frontend/src/components/SidebarMenu.tsx (renders .overlay-menu / .overlay-content markup, props: onClose, onToggleSortMenu)\n- App.tsx now imports SidebarMenu and replaces the inline overlay block with <SidebarMenu />\n\nNext steps (optional):\n- Wire up event handlers (open/close, dropdown behavior) from legacy scripts into the component.\n- Replace other inline overlays (if any) with SidebarMenu or use it fro",
+      "success": true,
+      "timestamp": "2026-07-25T11:09:32.380Z"
+    },
+    {
+      "task": "13. Recreate all colors from styles.css in CSS variables (light mode: white bg #ffffff, text #000000; dark mode: #121212, white text)",
+      "summary": "Done — CSS variables for the legacy color palette were added.\n\nWhat changed:\n- frontend/src/index.css: added --legacy-* variables inside :root and provided dark-mode overrides in the prefers-color-scheme media block.\n\nNotes and next steps:\n- Current CSS still uses hard-coded colors; next step is replacing usages with the new variables (e.g., background: var(--legacy-bg), color: var(--legacy-text), etc.). Do you want me to replace legacy color usages across the frontend CSS (and components) now?",
+      "success": true,
+      "timestamp": "2026-07-25T11:10:39.546Z"
+    },
+    {
+      "task": "14. Recreate all typography from styles.css (font families, font-sizes with clamp(), font-weights, line-heights)",
+      "summary": "Done — typography tokens and rules added to frontend/src/index.css mirroring legacy/styles.css.\n\nSummary:\n- Added CSS variables for fonts, clamp() sizes, weights, and line-heights.\n- Applied those tokens to .main-header, .title, .info, .ingredients pre, .instructions pre, .bottom-header, and the search input.\n\nNext steps (optional):\n- Run the dev server to visually verify pixel parity, or search/replace remaining hard-coded font properties elsewhere. Want me to run the dev server and open a quic",
+      "success": true,
+      "timestamp": "2026-07-25T11:11:14.425Z"
+    },
+    {
+      "task": "15. Recreate all spacing/padding from styles.css (gap values, margin/padding scales, button dimensions)",
+      "summary": "Done — spacing tokens and legacy spacing rules added to frontend/src/index.css.\n\nSummary:\n- Added many --space / --* spacing variables mirroring values from legacy/styles.css.\n- Applied the variables to matching selectors: .buttons, .random-recipe, .toggleDark, .home, .search-container input, .recipelist, .recipe, .title, .image-container, .info, .bottom-header, .content-container, .ingredients pre, .instructions pre, .menu-icon, .menu-icon span, .overlay-content, .recipeMenu, .dropbtn, .dropdow",
+      "success": true,
+      "timestamp": "2026-07-25T11:12:01.704Z"
+    },
+    {
+      "task": "16. Implement flexbox/grid layouts from styles.css (.content-container grid, recipe list flex, nav flex direction)",
+      "summary": "Done — grid and flex layouts implemented.\n\nSummary:\n- .content-container: display: grid; grid-template-columns: 1fr 1.8fr; responsive fallback to block under 768px.\n- .recipelist: display:flex; flex-direction:column; background, gap, padding, sizing set per legacy.\n- .recipe: max-width, margin, padding preserved.\n\nNext suggestions:\n- Replace remaining hard-coded layout styles in other CSS files (e.g., App.css) to reference these tokens for consistency. Want me to search for layout-related numeri",
+      "success": true,
+      "timestamp": "2026-07-25T11:12:18.904Z"
+    },
+    {
+      "task": "17. Recreate responsive design rules from styles.css (@media 768px breakpoint, switching grid → block layout)",
+      "summary": "Mobile responsive rules added and matched to legacy exactly.\n\nSummary of additions:\n- Mobile @media (max-width: 768px) block with:\n  - .title margin-bottom: 8%\n  - .main-header font-size and margin-top per legacy clamp()\n  - .info font-size: 0.85rem\n  - .content-container → display: block\n  - .ingredients/.instructions font-size and instructions padding\n  - .search-wrapper/.search-container widths\n  - .recipelist width: 95%\n  - .recipeMenu padding-top/margins per legacy\n\nNext step suggestions:\n-",
+      "success": true,
+      "timestamp": "2026-07-25T11:12:48.820Z"
+    },
+    {
+      "task": "18. Add dark-mode CSS class selectors to all styled components (body.dark-mode overrides, transition all 0.2s ease)",
+      "summary": "Done — dark-mode class selectors added.\n\nSummary:\n- body now has transition: all 0.2s ease.\n- Added a comprehensive body.dark-mode block implementing legacy dark-mode overrides for buttons, links, headers, search input, recipelist, ingredients/instructions pre blocks, menu icon, and recipeMenu links.\n\nNotes:\n- Variables still available; these class rules use explicit legacy dark values to ensure toggling the class reproduces legacy appearance regardless of system preference.\n- Next: wire the UI ",
+      "success": true,
+      "timestamp": "2026-07-25T11:13:24.538Z"
+    },
+    {
+      "task": "19. Create global.css matching styles.css color palette, fonts, and spacing without any scripts attached",
+      "summary": "Created frontend/src/global.css mirroring legacy styles.css palette, typography, spacing, layout, and responsive rules — purely CSS, no scripts.\n\nNext suggestions:\n- Import global.css into index.tsx or App.tsx when ready.\n- Optionally run the dev server to visually compare legacy vs React app.\n\nWant the import added to App.tsx (or main.tsx) now?",
+      "success": true,
+      "timestamp": "2026-07-25T11:14:11.371Z"
     }
   ]
 }

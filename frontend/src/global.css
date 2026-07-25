@@ -1,0 +1,232 @@
+/* global.css — repack of legacy/styles.css colors, typography, spacing and responsive rules
+   No scripts or JS behavior included. Use by importing this file in the app when desired. */
+
+:root {
+  /* Colors */
+  --bg: #ffffff;
+  --text: #000000;
+  --dark-bg: #121212;
+  --dark-text: #ffffff;
+
+  --button-bg: #121212;
+  --button-text: #ffffff;
+  --button-bg-dark: #ffffff;
+  --button-text-dark: #121212;
+
+  --main-header-color: #1a1a1a;
+  --title-color: #1a1a1a;
+  --link-color: #000000;
+  --link-hover: #301f15;
+  --recipelist-bg: #dfdde2;
+  --recipelist-bg-dark: #2b2b2b;
+
+  --overlay-bg: rgba(14,14,14,0.95);
+  --dropbtn-bg: #000000;
+  --dropbtn-hover: #1f1f1f;
+  --dropdown-bg: rgba(19,19,19,0.07); /* #13131311 in legacy */
+  --sortbtn-bg: #222222;
+  --sortbtn-active: rgb(107,107,107);
+
+  /* Typography */
+  --font-sans: sans-serif;
+  --main-header-size: clamp(4.5rem, 8vw, 5rem);
+  --main-header-weight: 300;
+  --main-header-letter-spacing: -0.02em;
+  --title-size: clamp(2.8rem, 5vw, 4.5rem);
+  --title-weight: 400;
+  --title-letter-spacing: -0.03em;
+  --ingredients-font-size: 1.05rem;
+  --instructions-font-size: 1.05rem;
+  --info-color: #4a4a4a;
+
+  /* Spacing */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 20px;
+  --btn-padding: 10px;
+  --btn-radius: 10px;
+
+  /* Layout */
+  --home-padding: 2rem;
+  --search-input-padding-vertical: 1rem;
+  --search-input-padding-horizontal: 1.13rem;
+  --recipelist-padding-vertical: 0.6rem;
+  --recipelist-padding-horizontal: 1.25rem;
+  --recipelist-gap: 9px;
+  --recipe-padding-vertical: 5rem;
+  --recipe-padding-horizontal: 2rem;
+}
+
+/* Base */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  overflow-y: auto;
+  transition: all 0.2s ease;
+}
+
+/* Buttons */
+.buttons{
+  display: flex;
+  position: relative;
+  justify-content: center;
+  gap: var(--space-lg);
+  align-items: flex-end;
+}
+
+.random-recipe, .toggleDark {
+  padding: var(--btn-padding);
+  border: none;
+  border-radius: var(--btn-radius);
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* Dark-mode class (no JS attached here; toggle by adding .dark-mode to a root element) */
+.dark-mode {
+  background: var(--dark-bg);
+  color: var(--dark-text);
+}
+.dark-mode .toggleDark,
+.dark-mode .random-recipe {
+  background: var(--button-bg-dark);
+  color: var(--button-text-dark);
+}
+
+/* Links */
+a { color: var(--link-color); font-weight: 700; text-decoration: none; }
+a:hover { color: var(--link-hover); }
+.dark-mode a { color: var(--dark-text); }
+.dark-mode a:hover { color: #f8f8f8; }
+
+/* Headers and titles */
+.main-header {
+  font-size: var(--main-header-size);
+  font-weight: var(--main-header-weight);
+  letter-spacing: var(--main-header-letter-spacing);
+  margin-bottom: 20px;
+  color: var(--main-header-color);
+  margin-top: 20%;
+}
+
+.title {
+  font-size: var(--title-size);
+  font-weight: var(--title-weight);
+  letter-spacing: var(--title-letter-spacing);
+  text-align: center;
+  color: var(--title-color);
+  margin-bottom: 3%;
+}
+
+/* Home container and search */
+.home {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--home-padding);
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.search-wrapper { position: relative; max-width: 400px; width: 100%; margin: 0 auto; }
+.search-container { width: 100%; }
+.search-container input[type=text] {
+  border-color: white;
+  width: 100%;
+  padding: var(--search-input-padding-vertical) var(--search-input-padding-horizontal);
+  font-size: medium;
+  font-family: inherit;
+  border-top-left-radius: 12px;  
+  border-top-right-radius: 12px;  
+  outline: none;
+  background: white;
+}
+.dark-mode .search-container input[type=text] {
+  background: #2b2b2b;
+  color: white;
+  border-color: #121212;
+}
+.dark-mode .search-container input[type=text]:focus{
+  background: #302f2f;
+}
+
+/* recipelist */
+.recipelist{
+  position: absolute;
+  top: 100%;
+  width: 100%;
+  max-width: 100%;
+  display: none;
+  flex-direction: column;
+  gap: var(--recipelist-gap);
+  padding: var(--recipelist-padding-vertical) var(--recipelist-padding-horizontal);
+  border-bottom-left-radius: 12px;  
+  border-bottom-right-radius: 12px;  
+  background: var(--recipelist-bg);
+  font-size: 1.1rem;
+  text-align: left;
+  text-indent: 4%;
+  z-index: 10;
+}
+.dark-mode .recipelist { background: var(--recipelist-bg-dark); color: var(--dark-text); }
+
+/* Recipe page */
+.recipe { max-width: 1000px; margin: 0 auto; padding: var(--recipe-padding-vertical) var(--recipe-padding-horizontal); min-height: 100vh; }
+.image-container { display:flex; flex-direction: column; align-items:center; margin-bottom: 80px; }
+.info { text-align: center; max-width: 900px; color: var(--info-color); line-height: 1.3rem; font-weight: 500; margin-top: 2%; }
+.dark-mode .info { color: var(--dark-text); }
+
+.bottom-header { position: absolute; bottom: 0; left: 50%; white-space: nowrap; transform: translateX(-50%); padding: 7px; color: black; font-size: 0.9rem; }
+.dark-mode .bottom-header { color: var(--dark-text); }
+
+/* Ingredients & instructions */
+.ingredients pre { background: #f8f8f8; padding-left: 40px; padding-right: 20px; font-family: sans-serif; padding-top: 30px; padding-bottom: 20px; border-radius: 10px; font-size: var(--ingredients-font-size); line-height: 1.7; color: #2a2a2a; white-space: pre-line; font-weight: 400; }
+.dark-mode .ingredients pre { background: #1a1a1a; color: var(--dark-text); }
+.instructions pre { font-size: var(--instructions-font-size); font-family: sans-serif; line-height: 1.5; color: #2a2a2a; padding: 50px; margin-top: 10px; white-space: pre-line; font-weight: 400; }
+.dark-mode .instructions pre { color: var(--dark-text); }
+
+/* Layout */
+.content-container { display: grid; grid-template-columns: 1fr 1.8fr; margin-top: 3%; }
+@media screen and (max-width: 768px) { .content-container { display: block; } }
+
+/* Overlay & menu */
+.menu-icon { display: block; position: absolute; top: 20px; right: 20px; z-index: 1000; cursor: pointer; padding: 10px; }
+.menu-icon span { display:block; width: 30px; height:3px; background-color: black; margin:6px 0; transition: 0.4s; }
+.dark-mode .menu-icon span { background-color: white; }
+
+.overlay-menu { height: 0; width: 100%; position: fixed; z-index: 999; left:0; top:0; background-color: var(--overlay-bg); overflow-y: hidden; transition: height 0.5s ease; display:flex; flex-direction: column; justify-content: center; align-items:center; opacity:0; pointer-events:none; }
+.overlay-menu.open { height: 100%; opacity: 1; pointer-events: all; transition: height 0.5s ease, opacity 0.3s ease; }
+
+.overlay-content { position: relative; width: 100%; text-align: center; margin-top: 30px; display:flex; flex-direction:column; gap:20px; padding: 0 20px; }
+
+.dropbtn { background-color: var(--dropbtn-bg); color: white; padding: 16px; font-size: 16px; cursor: pointer; border-radius: 10px; border: 1px; border-color: #1f1f1f; }
+.dropbtn:hover, .dropbtn:focus { background-color: var(--dropbtn-hover); }
+
+.dropdown { position: relative; display: inline-block; }
+.dropdown-content { display: none; flex-wrap: wrap; justify-content: center; gap: 10px; background-color: var(--dropdown-bg); border: none; min-width: 300px; z-index: 1; color: white; border-radius: 10px; padding: 10px; }
+.sortButtons { background-color: var(--sortbtn-bg); border: none; border-radius: 10px; color: white; padding: 8px 12px; cursor: pointer; }
+.sortButtons.active { background-color: var(--sortbtn-active); }
+.show { display: flex; }
+
+/* Mobile overrides */
+@media screen and (max-width: 768px) {
+  .title{ margin-bottom: 8%; }
+  .main-header{ font-size: clamp(2.5rem, 8vw, 1rem); margin-top: 55%; }
+  .info{ font-size: 0.85rem; }
+  .ingredients pre { font-size: 1.0rem; }
+  .instructions pre { font-size: 1.0rem; padding: 10px; }
+  .search-wrapper{ width: 80%; }
+  .search-container { width: 95%; }
+  .recipelist { width: 95%; }
+  .recipeMenu{ padding-top: 10%; margin-top:10%; margin-bottom: 50%; }
+}

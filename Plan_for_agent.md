@@ -1,10 +1,10 @@
 
 1. Inventory (no changes yet)
-
+~~
 ```
 /plan Read every file in /legacy (index.html, styles.css, script.js, recipelookup.js, search.js, darkmode.js, the full contents of recipes/, site.webmanifest, and the favicon/fallback assets). Produce a written inventory describing: what each script does, what DOM elements/IDs/classes they depend on, what data format recipes/ actually contains, and how the files reference each other. Make no code changes.
 ```
-
+~~
 2. Static shell first
 
 ```
@@ -34,7 +34,7 @@ CREATE INDEX recipe_tags_tag_idx ON recipe_tags (tag);
 
 Set up the FastAPI app in /backend with SQLAlchemy models and Alembic migrations matching this schema exactly. Read the database connection string only from a DATABASE_URL environment variable - never hardcode, guess, or request real credentials.
 
-I have not granted access to the production database yet, so for now: spin up a local, disposable PostgreSQL instance via Docker Compose for development, and seed it with a handful of sample rows derived from the /legacy/recipes inventory (fake/representative data only, not real production data). All backend tests must run against this local disposable instance, never against a real production database.
+I have not granted access to the production database yet, so for now: spin up a local, disposable PostgreSQL instance via Docker for development, and seed it with a handful of sample rows derived from the /legacy/recipes inventory (fake/representative data only, not real production data). All backend tests must run against this local disposable instance, never against a real production database.
 
 When real credentials are supplied later, only the DATABASE_URL value should need to change - no code changes.
 

@@ -1,0 +1,68 @@
+:local(.menuIcon) {
+  display: block;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  cursor: pointer;
+  padding: var(--menu-icon-padding);
+}
+
+:local(.bar) {
+  display: block;
+  width: var(--menu-icon-span-width);
+  height: var(--menu-icon-span-height);
+  background-color: var(--legacy-menu-icon-span);
+  margin: var(--menu-icon-span-gap) 0;
+  transition: 0.4s;
+}
+
+:local(.bar1) {}
+:local(.bar2) {}
+:local(.bar3) {}
+
+:local(.overlayMenu) {
+  /* minimal module-level hooks; main rules still live in global styles */
+}
+
+:local(.overlayContent) {
+  margin-top: var(--overlay-content-margin-top);
+  display: flex;
+  flex-direction: column;
+  gap: var(--overlay-content-gap);
+  padding: 0 var(--overlay-content-padding-inline);
+}
+
+:local(.dropbtn) {
+  padding: var(--dropbtn-padding);
+  border-radius: var(--btn-border-radius);
+  background-color: var(--legacy-dropbtn-bg);
+  color: white;
+}
+
+:local(.sortButtons) {
+  padding: var(--sortbutton-padding-vertical) var(--sortbutton-padding-horizontal);
+  border-radius: var(--btn-border-radius);
+  background-color: var(--legacy-sortButtons-bg);
+  color: white;
+}
+
+:local(.recipeMenu) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--recipeMenu-gap);
+  padding-top: var(--recipeMenu-padding-top);
+  padding-bottom: var(--recipeMenu-padding-bottom);
+  margin-left: var(--recipeMenu-margin-inline);
+  margin-right: var(--recipeMenu-margin-inline);
+}
+
+:local(.randomRecipe) {
+  padding: var(--btn-padding);
+  border-radius: var(--btn-border-radius);
+}
+
+:local(.toggleDark) {
+  padding: var(--btn-padding);
+  border-radius: var(--btn-border-radius);
+}
