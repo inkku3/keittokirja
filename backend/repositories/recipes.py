@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 from models import Recipe as RecipeModel
-from schemas import LegacyListItem, LegacyRecipeDetail
+from schemas import LegacyListItem, LegacyRecipeDetail, LegacySearchItem
 
 
 def fetch_all_for_legacy(db: Session) -> List[Dict[str, str]]:
@@ -56,3 +56,77 @@ def fetch_by_id_for_legacy(db: Session, recipe_id: str) -> Optional[Dict[str, st
         image_path=image_path,
     )
     return detail.dict()
+
+
+from sqlalchemy import func, text
+
+
+def search_for_legacy(db: Session, q: Optional[str] = None, tags: Optional[str] = None, limit: int = 100, offset: int = 0) -> List[Dict[str, str]]:
+    """
+    Search repository implementing legacy semantics:
+    - Case-insensitive substring match on title (lower(title) LIKE %q%).
+    - Tag AND-semantics when tags is a comma-separated string.
+    - Always order by lower(title) ASC.
+
+    Optimizations:
+    - When connected to PostgreSQL, uses string_to_array(...) @> ... expression for tag filtering so the GIN index on (string_to_array(tags, ',')) can be used.
+    - For portability (SQLite tests), falls back to client-side tag filtering when the DB doesn't support string_to_array.
+    """
+    # Normalize query
+    q_norm = q.strip() if isinstance(q, str) and q.strip() else None
+
+    # Base query
+    qry = db.query(RecipeModel)
+
+    if q_norm:
+        # case-insensitive substring match
+        qry = qry.filter(func.lower(RecipeModel.title).like(f"%{q_norm.lower()}%"))
+
+    # Order by lower(title)
+    qry = qry.order_by(func.lower(RecipeModel.title).asc())
+
+    # Apply offset/limit for DB query; tag filtering may further reduce results in fallback path
+    qry = qry.offset(offset).limit(limit)
+
+    # If tags provided and DB is PostgreSQL, use string_to_array expression for server-side filtering
+    results = []
+    dialect_name = getattr(db.bind, 'dialect', None)
+    dialect = dialect_name.name if dialect_name is not None else None
+
+    if tags and dialect == 'postgresql':
+        # Use SQL text expression to leverage GIN index on string_to_array(tags, ',')
+        expr = text("string_to_array(tags, ',') @> string_to_array(:tags, ',')")
+        # Rebuild base query to include tag filter
+        qry_tags = db.query(RecipeModel).filter(expr).order_by(func.lower(RecipeModel.title).asc()).offset(offset).limit(limit).params(tags=tags)
+        rows = qry_tags.all()
+        for rec in rows:
+            image_path = rec.image_path if getattr(rec, 'image_path', None) else f"/recipes/img/{rec.id}"
+            item = LegacySearchItem(name=rec.title, url=f"recipes/{rec.id}", tags=rec.tags or "", image_path=image_path)
+            results.append(item.dict())
+        return results
+
+    # Else: run DB query and apply tag filtering in Python if needed
+    rows = qry.all()
+
+    if tags:
+        # Legacy behavior: tags are CSV and matching is exact token match; whitespace is significant in legacy code
+        tag_tokens = tags.split(',')
+        filtered = []
+        for rec in rows:
+            rec_tags = rec.tags or ''
+            tag_array = rec_tags.split(',') if rec_tags else []
+            has_all = True
+            for t in tag_tokens:
+                if t not in tag_array:
+                    has_all = False
+                    break
+            if has_all:
+                filtered.append(rec)
+        rows = filtered
+
+    for rec in rows:
+        image_path = rec.image_path if getattr(rec, 'image_path', None) else f"/recipes/img/{rec.id}"
+        item = LegacySearchItem(name=rec.title, url=f"recipes/{rec.id}", tags=rec.tags or "", image_path=image_path)
+        results.append(item.dict())
+
+    return results

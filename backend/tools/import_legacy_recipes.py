@@ -119,6 +119,23 @@ def run_import(dry_run=True):
             session.commit()
             inserted += 1
         print(f'Inserted {inserted} new recipes')
+
+        # If running against PostgreSQL and a search_vector column exists, populate it
+        try:
+            dialect = engine.dialect.name if hasattr(engine, 'dialect') else None
+            if dialect == 'postgresql':
+                with engine.connect() as conn:
+                    # Check if column exists
+                    exists_q = "SELECT 1 FROM information_schema.columns WHERE table_name='recipes' AND column_name='search_vector'"
+                    res = conn.execute(exists_q).fetchone()
+                    if res:
+                        print('Populating search_vector column for recipes table')
+                        conn.execute("UPDATE recipes SET search_vector = to_tsvector('simple', coalesce(title, ''))")
+                        conn.execute("VACUUM ANALYZE recipes")
+                        print('search_vector population and VACUUM ANALYZE complete')
+        except Exception as e:
+            print('Warning: could not populate search_vector column or run VACUUM:', e)
+
     except Exception as e:
         print('Error while inserting into DB:', e)
         traceback.print_exc()

@@ -31,9 +31,13 @@ export const recipeAPI = {
     return response.data as LegacyListItem[];
   },
 
-  // Search recipes by title
-  search: async (query: string): Promise<Recipe[]> => {
-    const response = await api.get('/api/recipes/search', { params: { q: query } });
+  // Search recipes by title (legacy-compatible endpoint at /api/search)
+  // Accepts optional params and AbortSignal in config
+  search: async (query?: string, tags?: string, signal?: AbortSignal): Promise<Recipe[]> => {
+    const params: Record<string, any> = {};
+    if (query) params.q = query;
+    if (tags) params.tags = tags;
+    const response = await api.get('/api/search', { params, signal });
     return response.data;
   },
 

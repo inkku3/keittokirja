@@ -1,17 +1,20 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { recipeAPI } from '../api/recipes';
 import type { Recipe } from '../api/recipes';
 import HighlightedText from './HighlightedText';
 
 interface SearchBarProps {
   placeholder?: string;
+  debounceMs?: number; // default 0 to match legacy immediate behavior
+  tags?: string; // optional comma-separated tags to include in search
   onSearchResults?: (recipes: Recipe[]) => void;
   onTermChange?: (term: string) => void;
-  allRecipes?: Recipe[];
 }
 
 export function SearchBar({
-  placeholder = "Etsi reseptejä...",
+  placeholder = 'Etsi reseptejä...',
+  debounceMs = 0,
+  tags,
   onSearchResults,
   onTermChange,
 }: SearchBarProps) {
@@ -19,32 +22,110 @@ export function SearchBar({
   const [results, setResults] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchTerm(query);
-    onTermChange?.(query);
+  const abortRef = useRef<AbortController | null>(null);
+  const timerRef = useRef<number | null>(null);
 
+  // Load initial full list (legacy displays full list on load)
+  useEffect(() => {
+    let mounted = true;
+    const ac = new AbortController();
+    abortRef.current = ac;
+
+    (async () => {
+      try {
+        // while loading, follow legacy placeholder/disabled behavior externally via initialLoading
+        setInitialLoading(true);
+        const data = await recipeAPI.search(undefined, tags, ac.signal);
+        if (!mounted) return;
+        setResults(data);
+        setShowResults(true);
+        onSearchResults?.(data);
+      } catch (err: any) {
+        if (err?.name === 'CanceledError' || err?.message === 'canceled') {
+          // aborted - ignore
+        } else {
+          console.error('Initial recipe load failed:', err);
+        }
+      } finally {
+        if (mounted) setInitialLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      ac.abort();
+    };
+    // tags intentionally not in deps to avoid reloading initial list on tag changes here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const doSearch = useCallback(async (query: string) => {
+    // cancel previous request
+    if (abortRef.current) {
+      try {
+        abortRef.current.abort();
+      } catch {}
+      abortRef.current = null;
+    }
+
+    // If empty, follow legacy: hide results and don't call API
     if (!query.trim()) {
       setResults([]);
       setShowResults(false);
       onSearchResults?.([]);
+      setIsLoading(false);
       return;
     }
 
+    const ac = new AbortController();
+    abortRef.current = ac;
+
     setIsLoading(true);
     try {
-      const searchResults = await recipeAPI.search(query);
-      setResults(searchResults);
-      setShowResults(true);
-      onSearchResults?.(searchResults);
-    } catch (error) {
-      console.error('Search failed:', error);
-      setResults([]);
-      onSearchResults?.([]);
+      const data = await recipeAPI.search(query, tags, ac.signal);
+      setResults(data);
+      // show only when there are results — legacy hides when filtered.length === 0
+      setShowResults(Array.isArray(data) && data.length > 0);
+      onSearchResults?.(data);
+    } catch (err: any) {
+      if (err?.name === 'CanceledError' || err?.message === 'canceled') {
+        // request was aborted; no action
+      } else {
+        console.error('Search failed:', err);
+        setResults([]);
+        setShowResults(false);
+        onSearchResults?.([]);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [onSearchResults, onTermChange]);
+  }, [onSearchResults, tags]);
+
+  const handleChange = (value: string) => {
+    setSearchTerm(value);
+    onTermChange?.(value);
+
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (debounceMs > 0) {
+      timerRef.current = window.setTimeout(() => doSearch(value), debounceMs);
+    } else {
+      void doSearch(value);
+    }
+  };
+
+  useEffect(() => {
+    // cleanup on unmount
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const handleResultClick = (recipe: Recipe) => {
     setSearchTerm('');
@@ -60,19 +141,19 @@ export function SearchBar({
         <input
           id="search"
           type="text"
-          placeholder={placeholder}
+          placeholder={initialLoading ? 'Ladataan reseptejä...' : placeholder}
           value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-          disabled={isLoading}
+          onChange={(e) => handleChange(e.target.value)}
+          disabled={initialLoading}
         />
       </div>
+
+      {/* Legacy expects #recipes container — create it but control display via showResults and length */}
       {showResults && (
-        <div className="recipelist" id="recipes">
+        <div className="recipelist" id="recipes" style={{ display: showResults ? 'flex' : 'none' }}>
           {isLoading ? (
-            <div>Etsitään...</div>
-          ) : results.length === 0 ? (
-            <div>Ei tuloksia</div>
-          ) : (
+            <div>Ladataan...</div>
+          ) : results.length === 0 ? null : (
             results.map((recipe) => (
               <div key={recipe.id}>
                 <a
@@ -82,6 +163,7 @@ export function SearchBar({
                     handleResultClick(recipe);
                   }}
                 >
+                  {/* Highlight matches if any */}
                   <HighlightedText text={recipe.title} query={searchTerm} />
                 </a>
               </div>

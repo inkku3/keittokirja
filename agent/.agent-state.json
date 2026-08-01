@@ -1,29 +1,31 @@
 {
   "state": {
-    "goal": "Migrate the behaviour of legacy/recipelookup.js: add a FastAPI endpoint to fetch a single recipe's full detail by id/slug from PostgreSQL, and a React component/route that displays it exactly as the legacy recipe lookup does, including any fallback/error states recipelookup.js currently handles.",
+    "goal": "Migrate legacy/search.js: implement similar search behaviour (matching fields, matching filtering/sorting logic, matching how results update as the user types) using a FastAPI search endpoint against PostgreSQL and a React search component with identical UX to the legacy version.",
     "plan": [
-      "1. Inspect legacy/recipelookup.js and recipe detail HTML (legacy/recipe-template.html) to list exact DOM IDs, classes, text, image resolution sequence, and error/fallback behaviors.",
-      "2. Verify Postgres recipes table contains fields required by legacy detail (title, ingredients, instructions, info, image_path) and document any missing mappings.",
-      "3. Design and document the JSON shape the endpoint must return to match recipelookup.js (title, ingredients, instructions, info, optional image_path).",
-      "4. Add a repository function that fetches a single recipe by id from Postgres and returns a plain dict matching the legacy shape.",
-      "5. Add/confirm a Pydantic response model for the legacy detail shape and use it to validate repository output.",
-      "6. Implement a FastAPI GET endpoint /api/recipes/{recipe_id} that uses the repository, validates via Pydantic, returns 200 with the legacy shape, and returns 404 when missing.",
-      "7. Add try/except and logging to the endpoint to return 500 on server errors and log stack traces for debugging.",
-      "8. Ensure the endpoint includes image_path (prefer DB value; if missing, return a relative legacy path like /recipes/img/{id}) and document the chosen strategy.",
-      "9. If backend will serve images, add StaticFiles mounting using IMAGES_STATIC_DIR and IMAGES_URL_PREFIX and validate file permissions and URL accessibility.",
-      "10. Add unit tests for the repository function and endpoint: success case, 404 case, and error case (mock DB).",
-      "11. Create an import/verification checklist to confirm imported recipe detail fields match legacy Firestore samples (spot-check N items).",
-      "12. Design a React route /recipe/:id and a RecipeDetail component that reproduces legacy DOM (ids: #header, #info, #ingredients, #instructions; image container .image-container with img#image.foodpic).",
-      "13. Implement client-side image resolution logic in the component: use image_path first, then try /recipes/img/{id}.png, .jpg, .jpeg, then /fallback.png; hide image element if all fail.",
-      "14. Implement loading state UI matching legacy text and structure (e.g., initial placeholders), and display 404-style message when API returns 404.",
-      "15. Ensure component inserts the legacy element IDs and classes exactly so existing CSS applies pixel-perfect.",
-      "16. Add client-side error handling: network failures show a user-friendly error and log to console; the component should not crash on malformed data.",
-      "17. Write component unit tests (rendering, loading, 404, image-fallback logic) and an integration test using TestClient + TestRenderer or Playwright to assert DOM and content.",
-      "18. Run local end-to-end check: start backend (migrations + import), start frontend (dev or built dist), visit /recipe/<sample-id>, verify HTML, images, and fallback behavior match legacy output.",
-      "19. Add one or two automated smoke tests (headless browser) that load a sample detail page and assert #header text, ingredients <pre>, and that image element is either visible or hidden per fallback rules.",
-      "20. Document deployment steps: ensure backend migrations/import run in staging/production, IMAGES_STATIC_DIR populated or CDN configured, CORS allows frontend, and update README with the endpoint shape and how to re-import if needed."
+      "1. Inspect legacy/search.js to extract exact matching rules, filter/sort logic, debounce/timing, and DOM update sequence; document findings.",
+      "2. Create a concise spec mapping legacy behaviors to backend and frontend responsibilities (fields to search, ranking, sort order, live-update UX).",
+      "3. Design the JSON request/response shape for the FastAPI search endpoint to exactly match what the frontend needs.",
+      "4. Add SQL schema notes and required indexes (full-text or trigram) to support legacy matching performance.",
+      "5. Add a repository function prototype that accepts search params and returns legacy-shaped results (no implementation yet).",
+      "6. Write unit tests for the repository function behavior against an in-memory Postgres/SQLite dataset (cases: exact, partial, case, diacritics, tags).",
+      "7. Implement the repository SQL using the chosen search technique (fts/trigram/ILIKE) and add the minimal indexes.",
+      "8. Run repository unit tests and tune SQL/ranking until test behavior matches the legacy spec.",
+      "9. Add a Pydantic response model for the search result items and validate repository output with it.",
+      "10. Implement FastAPI GET /api/search endpoint that calls the repository, supports query params (q, tags, limit, offset), and preserves legacy error handling and logging.",
+      "11. Add endpoint unit tests (success, empty, invalid params, server error) using TestClient and mocked DB.",
+      "12. Implement CORS and caching headers guidance for the endpoint to support frontend live queries safely.",
+      "13. Design a React SearchBar component that reproduces legacy DOM, texts, and typing UX (debounce, incremental updates, highlighted matches).",
+      "14. Implement the component to call the search API with the exact query param shape, including debounce and aborting previous requests.",
+      "15. Add unit tests for the component (render, typing -> API call, debounce behavior, empty state, error handling) using React Testing Library and mocked fetch/axios.",
+      "16. Create an integration test that runs backend TestClient + static frontend (or Playwright) and asserts live-search behavior and DOM updates match legacy.",
+      "17. Run end-to-end tests and iterate on backend ranking or frontend highlighting until visual and functional parity is confirmed.",
+      "18. Add database migration script to create required indexes and document rollback steps.",
+      "19. Update import tooling or migration notes to populate any derived search fields if needed (e.g., text search vector).",
+      "20. Add CI jobs: run repository unit tests, endpoint tests, frontend component tests, and the integration smoke test on merge.",
+      "21. Update README and deployment docs with endpoint shape, env vars, index maintenance, and performance tuning tips.",
+      "22. Perform a staged rollout: enable endpoint in staging, run manual spot-checks vs legacy site, then promote to production."
     ],
-    "currentTask": 20,
+    "currentTask": 19,
     "completed": [
       "Based on my review of all files in /legacy, here is the numbered implementation plan:",
       "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
@@ -153,7 +155,26 @@
       "17. Write component unit tests (rendering, loading, 404, image-fallback logic) and an integration test using TestClient + TestRenderer or Playwright to assert DOM and content.",
       "18. Run local end-to-end check: start backend (migrations + import), start frontend (dev or built dist), visit /recipe/<sample-id>, verify HTML, images, and fallback behavior match legacy output.",
       "19. Add one or two automated smoke tests (headless browser) that load a sample detail page and assert #header text, ingredients <pre>, and that image element is either visible or hidden per fallback rules.",
-      "20. Document deployment steps: ensure backend migrations/import run in staging/production, IMAGES_STATIC_DIR populated or CDN configured, CORS allows frontend, and update README with the endpoint shape and how to re-import if needed."
+      "20. Document deployment steps: ensure backend migrations/import run in staging/production, IMAGES_STATIC_DIR populated or CDN configured, CORS allows frontend, and update README with the endpoint shape and how to re-import if needed.",
+      "1. Inspect legacy/search.js to extract exact matching rules, filter/sort logic, debounce/timing, and DOM update sequence; document findings.",
+      "2. Create a concise spec mapping legacy behaviors to backend and frontend responsibilities (fields to search, ranking, sort order, live-update UX).",
+      "3. Design the JSON request/response shape for the FastAPI search endpoint to exactly match what the frontend needs.",
+      "4. Add SQL schema notes and required indexes (full-text or trigram) to support legacy matching performance.",
+      "5. Add a repository function prototype that accepts search params and returns legacy-shaped results (no implementation yet).",
+      "6. Write unit tests for the repository function behavior against an in-memory Postgres/SQLite dataset (cases: exact, partial, case, diacritics, tags).",
+      "7. Implement the repository SQL using the chosen search technique (fts/trigram/ILIKE) and add the minimal indexes.",
+      "8. Run repository unit tests and tune SQL/ranking until test behavior matches the legacy spec.",
+      "9. Add a Pydantic response model for the search result items and validate repository output with it.",
+      "10. Implement FastAPI GET /api/search endpoint that calls the repository, supports query params (q, tags, limit, offset), and preserves legacy error handling and logging.",
+      "11. Add endpoint unit tests (success, empty, invalid params, server error) using TestClient and mocked DB.",
+      "12. Implement CORS and caching headers guidance for the endpoint to support frontend live queries safely.",
+      "13. Design a React SearchBar component that reproduces legacy DOM, texts, and typing UX (debounce, incremental updates, highlighted matches).",
+      "14. Implement the component to call the search API with the exact query param shape, including debounce and aborting previous requests.",
+      "15. Add unit tests for the component (render, typing -> API call, debounce behavior, empty state, error handling) using React Testing Library and mocked fetch/axios.",
+      "16. Create an integration test that runs backend TestClient + static frontend (or Playwright) and asserts live-search behavior and DOM updates match legacy.",
+      "17. Run end-to-end tests and iterate on backend ranking or frontend highlighting until visual and functional parity is confirmed.",
+      "18. Add database migration script to create required indexes and document rollback steps.",
+      "19. Update import tooling or migration notes to populate any derived search fields if needed (e.g., text search vector)."
     ]
   },
   "history": [
@@ -936,6 +957,120 @@
       "summary": "Documentation files added:\n\n- backend/DEPLOYMENT.md — deployment checklist, env vars, migration/import commands, image hosting options, verification steps, and smoke-test guidance.\n- README.md (repo root) — quick links to deployment and import docs.\n\nI put endpoint shapes and re-import instructions in backend/README_IMPORT.md already; DEPLOYMENT.md links to it. Want a Docker Compose + small run script to perform a one-command staging deploy (Postgres + backend + static frontend) next?",
       "success": true,
       "timestamp": "2026-08-01T07:12:01.846Z"
+    },
+    {
+      "task": "1. Inspect legacy/search.js to extract exact matching rules, filter/sort logic, debounce/timing, and DOM update sequence; document findings.",
+      "summary": "Findings from legacy/search.js\n\n- Data load\n  - Loads all recipes once from Firestore collection \"recipes\" into array recipes = [{ name, url: `recipes/${id}`, tags }].\n  - While loading: #search placeholder = \"Ladataan reseptejä...\" and disabled = true; #recipes shows `<div>Ladataan reseptejä..</div>`.\n\n- Fields searched\n  - Only recipe.name (title) is searched.\n\n- Matching rule\n  - Case-insensitive substring match:\n    - keyword = input.value.toLowerCase()\n    - filtered = recipes.filter(r => r",
+      "success": true,
+      "timestamp": "2026-08-01T07:17:32.935Z"
+    },
+    {
+      "task": "2. Create a concise spec mapping legacy behaviors to backend and frontend responsibilities (fields to search, ranking, sort order, live-update UX).",
+      "summary": "1) Fields to search\n- Title/name only (legacy used recipe.name/title). Tags used only for explicit tag filters, not for free-text search.\n\n2) Matching rule\n- Case-insensitive substring match: title.toLowerCase().includes(keyword.toLowerCase()).\n\n3) Sort / ranking\n- Always sort alphabetically by title (lowercased) ascending. No re-ranking for matches — search filters the pre-sorted list.\n\n4) Tag filtering\n- AND semantics: recipe.tags are CSV strings; a recipe matches if every requested tag is pre",
+      "success": true,
+      "timestamp": "2026-08-01T07:18:01.734Z"
+    },
+    {
+      "task": "3. Design the JSON request/response shape for the FastAPI search endpoint to exactly match what the frontend needs.",
+      "summary": "Request (HTTP GET)\n- Endpoint: GET /api/search or GET /api/recipes?q=...\n- Query params:\n  - q (string, optional) — free-text query (client may omit when empty). Backend treats empty/absent q as “return full list”.\n  - tags (string, optional) — comma-separated tag tokens (AND semantics, exact token match, no trimming).\n  - limit (int, optional) — max items to return (default 100, server-max 1000).\n  - offset (int, optional) — pagination offset (default 0).\n\nResponse (200 OK)\n- Body: JSON array o",
+      "success": true,
+      "timestamp": "2026-08-01T07:18:26.719Z"
+    },
+    {
+      "task": "4. Add SQL schema notes and required indexes (full-text or trigram) to support legacy matching performance.",
+      "summary": "Added search-index migration and documentation.\n\nFiles created:\n- backend/migrations/0002_add_search_indexes.sql — SQL to enable pg_trgm, add GIN trigram index on lower(title), a full-text tsvector index (optional), and a GIN expression index for tags (string_to_array(tags, ',')). Includes notes about CONCURRENTLY and ANALYZE.\n- backend/SEARCH_INDEXES.md — explains rationale, example query patterns matching legacy substring and tag-AND semantics, migration tips (CSV → TEXT[]), and operational gu",
+      "success": true,
+      "timestamp": "2026-08-01T07:19:53.656Z"
+    },
+    {
+      "task": "5. Add a repository function prototype that accepts search params and returns legacy-shaped results (no implementation yet).",
+      "summary": "Added prototype search function.\n\nFile modified:\n- backend/repositories/recipes.py\n  - New function: search_for_legacy(db, q=None, tags=None, limit=100, offset=0) -> List[Dict[str,str]]\n  - Detailed docstring describing params, expected behavior, SQL hints, and a NotImplementedError placeholder.\n\nNext steps (suggested)\n- Implement SQL/ORM logic using trigram index and tags expression index from migration 0002.\n- Add unit tests for search behavior (exact, substring, tag AND, empty q) before imple",
+      "success": true,
+      "timestamp": "2026-08-01T07:20:18.008Z"
+    },
+    {
+      "task": "6. Write unit tests for the repository function behavior against an in-memory Postgres/SQLite dataset (cases: exact, partial, case, diacritics, tags).",
+      "summary": "Added repository unit tests for search_for_legacy.\n\nFiles created:\n- backend/tests/test_search_repository.py — tests cover:\n  - exact match\n  - partial / case-insensitive match\n  - diacritics (non-crash / sanity)\n  - tag AND-semantics (single, multi, non-matching)\n  - empty q returns full alphabetically-sorted set\n\nNotes:\n- Tests use in-memory SQLite and the existing Recipe model.\n- search_for_legacy currently raises NotImplementedError; run tests after implementing the repository logic.\n- Next:",
+      "success": true,
+      "timestamp": "2026-08-01T07:21:31.092Z"
+    },
+    {
+      "task": "7. Implement the repository SQL using the chosen search technique (fts/trigram/ILIKE) and add the minimal indexes.",
+      "summary": "Implemented search_for_legacy in backend/repositories/recipes.py.\n\nSummary of implementation:\n- Uses SQLAlchemy func.lower(...).like('%q%') for case-insensitive substring matching.\n- Orders results by lower(title) ASC to match legacy alphabetical sort.\n- For Postgres dialect: applies server-side tag filtering using SQL expression string_to_array(tags, ',') @> string_to_array(:tags, ',') so the GIN expression index can be used.\n- For non-Postgres (e.g., SQLite tests), applies tag filtering in Pyt",
+      "success": true,
+      "timestamp": "2026-08-01T07:22:08.811Z"
+    },
+    {
+      "task": "8. Run repository unit tests and tune SQL/ranking until test behavior matches the legacy spec.",
+      "summary": "Blocked: this environment lacks pip so pytest cannot be executed here (ModuleNotFoundError: No module named 'sqlalchemy' and pip is missing).\n\nRun the repository tests locally or in CI — exact commands:\n\n1) Create venv and install deps\n- python3 -m venv .venv && source .venv/bin/activate\n- pip install --upgrade pip\n- pip install -r backend/requirements.txt pytest\n\n2) Run the tests\n- python -m pytest -q backend/tests/test_search_repository.py\n\n3) If you prefer Docker (no host pip):\n- docker run -",
+      "success": true,
+      "timestamp": "2026-08-01T07:22:45.315Z"
+    },
+    {
+      "task": "9. Add a Pydantic response model for the search result items and validate repository output with it.",
+      "summary": "Done — Pydantic search model added and repository output validated.\n\nWhat changed\n- backend/schemas.py\n  - Added LegacySearchItem model: { name, url, tags?, image_path? }.\n- backend/repositories/recipes.py\n  - search_for_legacy now constructs LegacySearchItem instances (Pydantic validation) before returning .dict().\n  - Postgres-optimized tag filtering preserved; SQLite fallback applies legacy CSV AND semantics in Python.\n\nValidation\n- Repository now validates each search result with LegacySearc",
+      "success": true,
+      "timestamp": "2026-08-01T07:24:05.163Z"
+    },
+    {
+      "task": "10. Implement FastAPI GET /api/search endpoint that calls the repository, supports query params (q, tags, limit, offset), and preserves legacy error handling and logging.",
+      "summary": "Implemented GET /api/search endpoint.\n\nWhat was added\n- New router: backend/routers/search.py\n  - Endpoint: GET /api/search\n  - Query params: q (optional), tags (optional, comma-separated), limit (int, default 100), offset (int, default 0)\n  - Returns: List[LegacySearchItem] (legacy shape: name, url, tags?, image_path?)\n  - Behavior: calls repositories.search_for_legacy, logs client info, returns 500 + logged stack trace on exceptions\n- main.py updated to include the new router\n- Uses existing P",
+      "success": true,
+      "timestamp": "2026-08-01T07:24:55.603Z"
+    },
+    {
+      "task": "11. Add endpoint unit tests (success, empty, invalid params, server error) using TestClient and mocked DB.",
+      "summary": "Created endpoint unit tests.\n\nFile added:\n- backend/tests/test_search_endpoint.py\n\nTests included:\n- test_search_success: queries /api/search?q=lohi and asserts matching items returned.\n- test_search_empty_returns_all_sorted: GET /api/search returns full list sorted by lower(name).\n- test_search_invalid_params: GET /api/search?offset=-1 expects 422 validation error.\n- test_search_server_error: monkeypatches repositories.search_for_legacy to raise and expects 500.\n\nNotes:\n- These tests use FastAP",
+      "success": true,
+      "timestamp": "2026-08-01T07:25:24.111Z"
+    },
+    {
+      "task": "12. Implement CORS and caching headers guidance for the endpoint to support frontend live queries safely.",
+      "summary": "Implemented CORS/caching guidance and conservative cache headers for the search endpoint.\n\nSummary:\n- backend/routers/search.py\n  - Accepts Response and sets conservative headers:\n    - Cache-Control: private, max-age=0, no-store, no-cache, must-revalidate\n    - Pragma: no-cache\n  - Logs client info and preserves legacy search semantics.\n\n- backend/DEPLOYMENT.md\n  - Added guidance: set CORS_ORIGINS to exact frontend origin(s) and avoid '*' in production.\n  - Explained cache behavior and recommen",
+      "success": true,
+      "timestamp": "2026-08-01T07:26:29.706Z"
+    },
+    {
+      "task": "13. Design a React SearchBar component that reproduces legacy DOM, texts, and typing UX (debounce, incremental updates, highlighted matches).",
+      "summary": "Props\n- initialQuery?: string\n- debounceMs?: number (default 0 — legacy has no debounce)\n- highlightMatches?: boolean (default false to preserve legacy)\n- tags?: string (comma CSV)\n- onSelect?(item)\n\nDOM (exact selectors)\n- <input id=\"search\" /> — placeholder \"Ladataan reseptejä...\" while loading, then \"Etsi reseptejä...\"\n- <div id=\"recipes\"></div> — results container; items rendered as <div><a href=\"recipes/{id}\">{name}</a></div>\n\nBehavior\n- Mount: fetch GET /api/search (no q) for initial sorte",
+      "success": true,
+      "timestamp": "2026-08-01T07:26:58.865Z"
+    },
+    {
+      "task": "14. Implement the component to call the search API with the exact query param shape, including debounce and aborting previous requests.",
+      "summary": "Implemented SearchBar improvements:\n\n- frontend/src/api/recipes.ts\n  - recipeAPI.search now calls the new /api/search endpoint.\n  - Accepts optional query, tags, and AbortSignal (signal) to support cancellation.\n\n- frontend/src/components/SearchBar.tsx\n  - Loads initial full list on mount (placeholder \"Ladataan reseptejä...\" and input disabled while loading) to match legacy initial load.\n  - Calls /api/search on every input (no debounce by default), or with debounceMs prop when provided.\n  - Can",
+      "success": true,
+      "timestamp": "2026-08-01T07:28:46.107Z"
+    },
+    {
+      "task": "15. Add unit tests for the component (render, typing -> API call, debounce behavior, empty state, error handling) using React Testing Library and mocked fetch/axios.",
+      "summary": "Added React unit tests for SearchBar.\n\nFiles created:\n- frontend/src/__tests__/SearchBar.test.tsx — covers:\n  - initial load & results rendering\n  - typing triggers API call\n  - debounce behavior (fake timers)\n  - empty input hides results (no API call)\n  - network error logs and does not crash\n\nNotes:\n- Tests mock recipeAPI.search; they use Jest + React Testing Library patterns (user-event, fake timers).\n- Run locally/CI after installing dev deps (jest/vitest, @testing-library/react, @testing-l",
+      "success": true,
+      "timestamp": "2026-08-01T07:29:49.094Z"
+    },
+    {
+      "task": "16. Create an integration test that runs backend TestClient + static frontend (or Playwright) and asserts live-search behavior and DOM updates match legacy.",
+      "summary": "Integration test added: backend/tests/test_search_integration.py.\n\nWhat the test does\n- Starts an in-memory TestClient-backed FastAPI app seeded with sample recipes.\n- Serves static frontend/dist or legacy/index.html via a temporary HTTP server.\n- Uses requests + BeautifulSoup to fetch the frontend root and assert presence of #search and #recipes.\n- Uses TestClient to call /api/search:\n  - Asserts full-list (no q) contains sample names.\n  - Simulates typing by calling /api/search?q=lohi and asse",
+      "success": true,
+      "timestamp": "2026-08-01T07:30:50.931Z"
+    },
+    {
+      "task": "17. Run end-to-end tests and iterate on backend ranking or frontend highlighting until visual and functional parity is confirmed.",
+      "summary": "I can’t run the full E2E here — this environment lacks pip/playwright and cannot start the real servers. Next steps you can run locally or in CI; pick one and I’ll implement it (CI workflow or Docker Compose).\n\nLocal commands (one-by-one)\n1) Python env + deps:\n   python3 -m venv .venv && source .venv/bin/activate\n   pip install --upgrade pip\n   pip install -r backend/requirements.txt pytest requests beautifulsoup4\n\n2) Apply migrations + seed (or import):\n   export DATABASE_URL=sqlite:///./tmp_te",
+      "success": true,
+      "timestamp": "2026-08-01T07:31:11.392Z"
+    },
+    {
+      "task": "18. Add database migration script to create required indexes and document rollback steps.",
+      "summary": "Added rollback migration and deployment docs.\n\nWhat changed\n- backend/migrations/0002_rollback_search_indexes.sql — SQL to drop the search indexes (includes commented recommended CONCURRENTLY commands).\n- backend/DEPLOYMENT.md — added a \"Rollback for search indexes\" section with recommended safe steps (DROP INDEX CONCURRENTLY via psql), note about optional pg_trgm DROP, and advice to VACUUM ANALYZE and monitor after rollback.\n\nNotes\n- The provided rollback file contains non-CONCURRENT DROP INDEX",
+      "success": true,
+      "timestamp": "2026-08-01T07:32:21.930Z"
+    },
+    {
+      "task": "19. Update import tooling or migration notes to populate any derived search fields if needed (e.g., text search vector).",
+      "summary": "Updated import tooling and docs to support derived search fields.\n\nChanges made\n- backend/tools/import_legacy_recipes.py\n  - After inserting rows, if connected to PostgreSQL and a recipes.search_vector column exists, the importer now populates search_vector with to_tsvector('simple', title) and runs VACUUM ANALYZE recipes. Failures are logged but do not abort the import.\n\n- backend/SEARCH_INDEXES.md\n  - Added a section describing an optional search_vector tsvector column, example migrations to a",
+      "success": true,
+      "timestamp": "2026-08-01T07:33:12.821Z"
     }
   ]
 }

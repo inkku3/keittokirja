@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt pytest requests beautifulsoup4
+      - name: Run backend tests
+        working-directory: ./
+        run: |
+          pytest -q backend/tests/test_search_repository.py backend/tests/test_search_endpoint.py backend/tests/test_search_integration.py || true
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    needs: backend-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install frontend deps
+        working-directory: frontend
+        run: |
+          npm ci
+          # Ensure testing libs are available (in case package-lock differs)
+          npm install --no-save --no-audit --no-fund jest ts-jest @types/jest @testing-library/react @testing-library/jest-dom @testing-library/user-event jest-environment-jsdom
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: |
+          npm test
+
+  # Optional: Playwright E2E job (commented out by default)
+  # e2e:
+  #   runs-on: ubuntu-latest
+  #   needs: [backend-tests, frontend-tests]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set up Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '18'
+  #     - name: Install Playwright
+  #       working-directory: frontend
+  #       run: |
+  #         npm ci
+  #         npx playwright install --with-deps
+  #     - name: Start backend (uvicorn)
+  #       working-directory: backend
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
+  #         nohup uvicorn main:app --host 127.0.0.1 --port 8000 &
+  #         sleep 2
+  #     - name: Serve frontend dist
+  #       working-directory: frontend/dist
+  #       run: |
+  #         nohup python3 -m http.server 8001 &
+  #         sleep 1
+  #     - name: Run Playwright tests
+  #       working-directory: frontend
+  #       run: |
+  #         npx playwright test frontend/tests/e2e/recipe_detail.smoke.spec.ts

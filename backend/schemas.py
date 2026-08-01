@@ -35,6 +35,14 @@ class LegacyListItem(BaseModel):
     url: str
     image_path: Optional[str] = None
 
+# Search result item used by the legacy search endpoint — includes tags to allow frontend
+# to perform client-side tag display/filtering if needed.
+class LegacySearchItem(BaseModel):
+    name: str
+    url: str
+    tags: Optional[str] = None
+    image_path: Optional[str] = None
+
 class LegacyRecipeDetail(BaseModel):
     title: str
     ingredients: str

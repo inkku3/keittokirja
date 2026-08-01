@@ -2,7 +2,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
-from routers import migration, recipes
+from routers import migration, recipes, search
 
 # Basic logging configuration
 logging.basicConfig(
@@ -29,6 +29,7 @@ app.add_middleware(
 # Include routers
 app.include_router(migration.router)
 app.include_router(recipes.router)
+app.include_router(search.router)
 
 # Optionally mount static files for recipe images
 if settings.serve_images_from_backend:
