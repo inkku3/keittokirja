@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Recipe } from '../api/recipes';
 
 interface RecipeImageProps {
   recipeId: string;

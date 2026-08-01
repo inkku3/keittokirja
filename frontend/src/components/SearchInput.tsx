@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
+import { recipeAPI } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 
 interface SearchInputProps {
   placeholder?: string;
@@ -42,11 +43,6 @@ export function SearchInput({
     [onResultsChange]
   );
 
-  const clearSearch = () => {
-    setSearchTerm('');
-    setResults([]);
-    onResultsChange?.([], false);
-  };
 
   return (
     <div className="search-wrapper">

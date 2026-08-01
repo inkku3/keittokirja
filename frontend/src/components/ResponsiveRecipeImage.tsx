@@ -21,7 +21,7 @@ export function ResponsiveRecipeImage({
 }: ResponsiveRecipeImageProps) {
   const { currentImageSrc, isLoading, hasError, handleImageLoad, handleImageError } =
     useImageLoader({
-      sources: [imagePath, `recipes/img/${recipeId}.png`, `recipes/img/${recipeId}.jpg`, `recipes/img/${recipeId}.jpeg`],
+      sources: [imagePath, `recipes/img/${recipeId}.png`, `recipes/img/${recipeId}.jpg`, `recipes/img/${recipeId}.jpeg`].filter((s): s is string => !!s),
       fallbackImage,
     });
 
@@ -39,7 +39,7 @@ export function ResponsiveRecipeImage({
       <img
         className={className}
         id="image"
-        src={currentImageSrc}
+        src={currentImageSrc ?? fallbackImage}
         alt={title}
         onLoad={handleImageLoad}
         onError={handleImageError}

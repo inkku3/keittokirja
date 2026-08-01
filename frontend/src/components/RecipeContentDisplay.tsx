@@ -1,4 +1,4 @@
-import { Recipe } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 import { RecipeTitle } from './RecipeTitle';
 import { RecipeInfo } from './RecipeInfo';
 import { RecipeIngredients } from './RecipeIngredients';

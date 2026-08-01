@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Recipe } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 
 export interface SortConfig {
   field: string;

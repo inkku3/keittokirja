@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
+import HighlightedText from './HighlightedText';
 
 interface RecipeListContainerProps {
   recipes?: Recipe[];
@@ -17,7 +18,8 @@ export function RecipeListContainer({
   onRecipeClick,
   sortBy = 'title',
   sortOrder = 'asc',
-}: RecipeListContainerProps) {
+  searchQuery = '',
+}: RecipeListContainerProps & { searchQuery?: string }) {
   const [sortedRecipes, setSortedRecipes] = useState<Recipe[]>(recipes);
 
   useEffect(() => {
@@ -69,7 +71,14 @@ export function RecipeListContainer({
                 }
               }}
             >
-              {recipe.title}
+              {/* Highlight matches in title when searchQuery is present */}
+              <span>
+                {searchQuery ? (
+                  <HighlightedText text={recipe.title} query={searchQuery} />
+                ) : (
+                  recipe.title
+                )}
+              </span>
             </a>
           </div>
         ))

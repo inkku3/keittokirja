@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Recipe } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 import { MenuOverlayContent } from './MenuOverlayContent';
 
 interface NavigationProps {

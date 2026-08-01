@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
-import { useSortFilterState, type SortConfig, type FilterState } from '../hooks/useSortFilterState';
+import { recipeAPI } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
+import { useSortFilterState } from '../hooks/useSortFilterState';
 import { useDarkMode } from '../hooks/useDarkMode';
 
 interface RecipeManagerProps {

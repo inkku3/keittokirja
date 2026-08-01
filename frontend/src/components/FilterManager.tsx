@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
+import { recipeAPI } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 import { FilterDropdown } from './FilterDropdown';
 
 interface FilterManagerProps {
@@ -13,8 +14,8 @@ export function FilterManager({
   isOpen = false,
   onToggle,
 }: FilterManagerProps) {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [_selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [_isLoading, setIsLoading] = useState(false);
 
   const handleFilterChange = useCallback(
     async (newFilters: string[]) => {

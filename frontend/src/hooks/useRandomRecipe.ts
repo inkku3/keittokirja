@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
+import { recipeAPI } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 
 export function useRandomRecipe() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);

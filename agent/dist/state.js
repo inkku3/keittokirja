@@ -29,6 +29,13 @@ export class State {
             return null;
         return this.state.plan[this.state.currentTask];
     }
+    skipTask() {
+        const task = this.nextTask();
+        if (!task)
+            return null;
+        this.state.currentTask++;
+        return task;
+    }
     finishTask() {
         const task = this.nextTask();
         if (!task)

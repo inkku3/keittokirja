@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Recipe } from '../api/recipes';
+import { useState } from 'react';
+import type { Recipe } from '../api/recipes';
 import { FilterManager } from './FilterManager';
 
 interface MenuOverlayContentProps {

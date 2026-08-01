@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
+import { recipeAPI } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 
 interface UseRecipeDetailProps {
   recipeId?: string;

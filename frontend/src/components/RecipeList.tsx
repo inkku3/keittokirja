@@ -1,4 +1,4 @@
-import { Recipe } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 
 interface RecipeListProps {
   recipes: Recipe[];

@@ -1,21 +1,36 @@
 import { useEffect, useState } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
+import { recipeAPI } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
 import { RecipeListContainer } from './RecipeListContainer';
 
 interface FullRecipeListProps {
   showInitially?: boolean;
   onRecipeSelect?: (recipe: Recipe) => void;
+  // If parent supplies recipes, use them instead of fetching
+  recipes?: Recipe[];
+  isLoading?: boolean;
+  searchQuery?: string;
 }
 
 export function FullRecipeList({
   showInitially = true,
   onRecipeSelect,
+  recipes: externalRecipes,
+  isLoading: externalLoading,
+  searchQuery = '',
 }: FullRecipeListProps) {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [recipes, setRecipes] = useState<Recipe[]>(externalRecipes ?? []);
+  const [isLoading, setIsLoading] = useState<boolean>(externalLoading ?? true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // If external recipes are provided, prefer them and skip fetching
+    if (externalRecipes !== undefined) {
+      setRecipes(externalRecipes);
+      setIsLoading(!!externalLoading);
+      return;
+    }
+
     const fetchRecipes = async () => {
       setIsLoading(true);
       setError(null);
@@ -31,7 +46,7 @@ export function FullRecipeList({
     };
 
     fetchRecipes();
-  }, []);
+  }, [externalRecipes, externalLoading]);
 
   if (error) {
     return <div className="recipelist error">{error}</div>;
@@ -43,6 +58,7 @@ export function FullRecipeList({
       isVisible={showInitially}
       isLoading={isLoading}
       onRecipeClick={onRecipeSelect}
+      searchQuery={searchQuery}
     />
   );
 }

@@ -1,16 +1,19 @@
-import { useState, useCallback, useEffect } from 'react';
-import { recipeAPI, Recipe } from '../api/recipes';
+import { useState, useCallback } from 'react';
+import { recipeAPI } from '../api/recipes';
+import type { Recipe } from '../api/recipes';
+import HighlightedText from './HighlightedText';
 
 interface SearchBarProps {
   placeholder?: string;
   onSearchResults?: (recipes: Recipe[]) => void;
+  onTermChange?: (term: string) => void;
   allRecipes?: Recipe[];
 }
 
 export function SearchBar({
   placeholder = "Etsi reseptejä...",
   onSearchResults,
-  allRecipes = [],
+  onTermChange,
 }: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<Recipe[]>([]);
@@ -19,6 +22,7 @@ export function SearchBar({
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchTerm(query);
+    onTermChange?.(query);
 
     if (!query.trim()) {
       setResults([]);
@@ -36,13 +40,15 @@ export function SearchBar({
     } catch (error) {
       console.error('Search failed:', error);
       setResults([]);
+      onSearchResults?.([]);
     } finally {
       setIsLoading(false);
     }
-  }, [onSearchResults]);
+  }, [onSearchResults, onTermChange]);
 
   const handleResultClick = (recipe: Recipe) => {
     setSearchTerm('');
+    onTermChange?.('');
     setResults([]);
     setShowResults(false);
     window.location.href = `/recipe/${recipe.id}`;
@@ -76,7 +82,7 @@ export function SearchBar({
                     handleResultClick(recipe);
                   }}
                 >
-                  {recipe.title}
+                  <HighlightedText text={recipe.title} query={searchTerm} />
                 </a>
               </div>
             ))
