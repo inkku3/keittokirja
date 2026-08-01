@@ -1,37 +1,29 @@
 {
   "state": {
-    "goal": "Add a FastAPI GET endpoint in /backend that returns the recipe list from PostgreSQL in the same shape that script.js and recipelookup.js currently expect. Then build a React component in /frontend that calls this endpoint and renders the recipe list identically to how legacy/script.js and legacy/index.html render it today.",
+    "goal": "Migrate the behaviour of legacy/recipelookup.js: add a FastAPI endpoint to fetch a single recipe's full detail by id/slug from PostgreSQL, and a React component/route that displays it exactly as the legacy recipe lookup does, including any fallback/error states recipelookup.js currently handles.",
     "plan": [
-      "1. Inspect legacy files (legacy/index.html, legacy/script.js, legacy/recipelookup.js, legacy/recipes/) to document the exact JSON shape the legacy scripts expect for recipe list and individual recipes.",
-      "2. Confirm PostgreSQL connection details and decide on environment variable names (e.g., DATABASE_URL) to use in /backend.",
-      "3. Design the recipes table schema in Postgres mapping every field required by the legacy JSON shape (id, title, tags, ingredients, instructions, info, image_path, created_at, updated_at).",
-      "4. Add a database migration plan (choose Alembic or equivalent) and create an initial migration to create the recipes table.",
-      "5. Create a small data-import plan to transform legacy recipe files under legacy/recipes into rows for the new recipes table, preserving image paths and tags format.",
-      "6. Implement and run the data-import locally (or via a one-off script) to populate PostgreSQL with all legacy recipes; verify counts and sample rows match legacy data.",
-      "7. In /backend, add a repository/data-access layer function that queries the recipes table and returns rows as plain dicts (no framing) matching the legacy JSON shape.",
-      "8. Create a Pydantic model in /backend that mirrors the exact JSON schema used by legacy scripts and use it to validate outgoing recipe objects.",
-      "9. Implement a FastAPI GET endpoint at /api/recipes/ that uses the repository to fetch all recipes, serializes them via the Pydantic model, and returns JSON in the legacy format.",
-      "10. Ensure the endpoint includes image_path values that point to accessible static URLs (either served from backend static files or the frontend/public location); document the chosen approach.",
-      "11. Add CORS middleware configuration in FastAPI allowing the frontend origin(s) to call /api/recipes/ in development and production.",
-      "12. Write automated unit tests for the repository and an integration test for the /api/recipes/ endpoint (mock DB or use a test database) that asserts the returned JSON shape and a sample recipe field values.",
-      "13. Run the FastAPI app locally (uvicorn) and manually curl /api/recipes/ to verify the JSON response exactly matches the legacy shape for several sample recipes.",
-      "14. Add error handling and sensible HTTP status codes for the endpoint (e.g., 500 on server error, 200 with empty list when no recipes).",
-      "15. Add logging for the endpoint to record request receipt and any DB errors for easier debugging in production.",
-      "16. Update backend deployment config or .env.example to include DATABASE_URL and any static-file serving flags needed for recipe images.",
-      "17. In /frontend, document the legacy DOM structure and CSS classes used by legacy/index.html for the recipe list (container IDs/classes, anchor structure, image class names).",
-      "18. Create a new React component (e.g., LegacyRecipeList) that fetches GET /api/recipes/ via the existing recipeAPI client and stores recipes in component state.",
-      "19. Implement rendering in LegacyRecipeList that reproduces the legacy HTML structure and uses the same CSS class names and element hierarchy so legacy styles apply unchanged.",
-      "20. Ensure the frontend component uses the same image src resolution logic (image_path first, then fallback paths, then fallback.png) so visuals match legacy rendering.",
-      "21. Add loading and empty-state UI that matches the legacy text and structure exactly (e.g., \"Ladataan reseptejä...\", \"Ei reseptejä\").",
-      "22. Integrate LegacyRecipeList into the HomePage route, replacing or wiring it alongside the current React list so the page renders identically.",
-      "23. Test the frontend locally against the running FastAPI backend: verify the list loads, titles, images and links match legacy output, and CSS is pixel-consistent.",
-      "24. Add an end-to-end smoke test that boots the backend (test DB), serves frontend (or uses built build), and asserts the rendered HTML contains expected legacy selectors and sample recipe titles.",
-      "25. Prepare deployment checklist: confirm backend env vars, migrations applied, static/image hosting strategy, CORS allowed origins, and that frontend VITE_API_URL points to the production backend.",
-      "26. Deploy backend to staging/production, run DB migrations and data import, then hit /api/recipes/ and verify responses in the production environment.",
-      "27. Deploy frontend production build configured with VITE_API_URL to production, load the homepage, and perform a final manual visual comparison to the legacy site to confirm parity.",
-      "28. Clean up: remove any temporary mock servers or one-off import scripts from the repo or move them to tooling/docs, and add brief README notes describing the endpoint shape and how to re-import legacy recipes if needed."
+      "1. Inspect legacy/recipelookup.js and recipe detail HTML (legacy/recipe-template.html) to list exact DOM IDs, classes, text, image resolution sequence, and error/fallback behaviors.",
+      "2. Verify Postgres recipes table contains fields required by legacy detail (title, ingredients, instructions, info, image_path) and document any missing mappings.",
+      "3. Design and document the JSON shape the endpoint must return to match recipelookup.js (title, ingredients, instructions, info, optional image_path).",
+      "4. Add a repository function that fetches a single recipe by id from Postgres and returns a plain dict matching the legacy shape.",
+      "5. Add/confirm a Pydantic response model for the legacy detail shape and use it to validate repository output.",
+      "6. Implement a FastAPI GET endpoint /api/recipes/{recipe_id} that uses the repository, validates via Pydantic, returns 200 with the legacy shape, and returns 404 when missing.",
+      "7. Add try/except and logging to the endpoint to return 500 on server errors and log stack traces for debugging.",
+      "8. Ensure the endpoint includes image_path (prefer DB value; if missing, return a relative legacy path like /recipes/img/{id}) and document the chosen strategy.",
+      "9. If backend will serve images, add StaticFiles mounting using IMAGES_STATIC_DIR and IMAGES_URL_PREFIX and validate file permissions and URL accessibility.",
+      "10. Add unit tests for the repository function and endpoint: success case, 404 case, and error case (mock DB).",
+      "11. Create an import/verification checklist to confirm imported recipe detail fields match legacy Firestore samples (spot-check N items).",
+      "12. Design a React route /recipe/:id and a RecipeDetail component that reproduces legacy DOM (ids: #header, #info, #ingredients, #instructions; image container .image-container with img#image.foodpic).",
+      "13. Implement client-side image resolution logic in the component: use image_path first, then try /recipes/img/{id}.png, .jpg, .jpeg, then /fallback.png; hide image element if all fail.",
+      "14. Implement loading state UI matching legacy text and structure (e.g., initial placeholders), and display 404-style message when API returns 404.",
+      "15. Ensure component inserts the legacy element IDs and classes exactly so existing CSS applies pixel-perfect.",
+      "16. Add client-side error handling: network failures show a user-friendly error and log to console; the component should not crash on malformed data.",
+      "17. Write component unit tests (rendering, loading, 404, image-fallback logic) and an integration test using TestClient + TestRenderer or Playwright to assert DOM and content.",
+      "18. Run local end-to-end check: start backend (migrations + import), start frontend (dev or built dist), visit /recipe/<sample-id>, verify HTML, images, and fallback behavior match legacy output.",
+      "19. Add one or two automated smoke tests (headless browser) that load a sample detail page and assert #header text, ingredients <pre>, and that image element is either visible or hidden per fallback rules.",
+      "20. Document deployment steps: ensure backend migrations/import run in staging/production, IMAGES_STATIC_DIR populated or CDN configured, CORS allows frontend, and update README with the endpoint shape and how to re-import if needed."
     ],
-    "currentTask": 28,
+    "currentTask": 20,
     "completed": [
       "Based on my review of all files in /legacy, here is the numbered implementation plan:",
       "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
@@ -141,7 +133,27 @@
       "25. Prepare deployment checklist: confirm backend env vars, migrations applied, static/image hosting strategy, CORS allowed origins, and that frontend VITE_API_URL points to the production backend.",
       "26. Deploy backend to staging/production, run DB migrations and data import, then hit /api/recipes/ and verify responses in the production environment.",
       "27. Deploy frontend production build configured with VITE_API_URL to production, load the homepage, and perform a final manual visual comparison to the legacy site to confirm parity.",
-      "28. Clean up: remove any temporary mock servers or one-off import scripts from the repo or move them to tooling/docs, and add brief README notes describing the endpoint shape and how to re-import legacy recipes if needed."
+      "28. Clean up: remove any temporary mock servers or one-off import scripts from the repo or move them to tooling/docs, and add brief README notes describing the endpoint shape and how to re-import legacy recipes if needed.",
+      "1. Inspect legacy/recipelookup.js and recipe detail HTML (legacy/recipe-template.html) to list exact DOM IDs, classes, text, image resolution sequence, and error/fallback behaviors.",
+      "2. Verify Postgres recipes table contains fields required by legacy detail (title, ingredients, instructions, info, image_path) and document any missing mappings.",
+      "3. Design and document the JSON shape the endpoint must return to match recipelookup.js (title, ingredients, instructions, info, optional image_path).",
+      "4. Add a repository function that fetches a single recipe by id from Postgres and returns a plain dict matching the legacy shape.",
+      "5. Add/confirm a Pydantic response model for the legacy detail shape and use it to validate repository output.",
+      "6. Implement a FastAPI GET endpoint /api/recipes/{recipe_id} that uses the repository, validates via Pydantic, returns 200 with the legacy shape, and returns 404 when missing.",
+      "7. Add try/except and logging to the endpoint to return 500 on server errors and log stack traces for debugging.",
+      "8. Ensure the endpoint includes image_path (prefer DB value; if missing, return a relative legacy path like /recipes/img/{id}) and document the chosen strategy.",
+      "9. If backend will serve images, add StaticFiles mounting using IMAGES_STATIC_DIR and IMAGES_URL_PREFIX and validate file permissions and URL accessibility.",
+      "10. Add unit tests for the repository function and endpoint: success case, 404 case, and error case (mock DB).",
+      "11. Create an import/verification checklist to confirm imported recipe detail fields match legacy Firestore samples (spot-check N items).",
+      "12. Design a React route /recipe/:id and a RecipeDetail component that reproduces legacy DOM (ids: #header, #info, #ingredients, #instructions; image container .image-container with img#image.foodpic).",
+      "13. Implement client-side image resolution logic in the component: use image_path first, then try /recipes/img/{id}.png, .jpg, .jpeg, then /fallback.png; hide image element if all fail.",
+      "14. Implement loading state UI matching legacy text and structure (e.g., initial placeholders), and display 404-style message when API returns 404.",
+      "15. Ensure component inserts the legacy element IDs and classes exactly so existing CSS applies pixel-perfect.",
+      "16. Add client-side error handling: network failures show a user-friendly error and log to console; the component should not crash on malformed data.",
+      "17. Write component unit tests (rendering, loading, 404, image-fallback logic) and an integration test using TestClient + TestRenderer or Playwright to assert DOM and content.",
+      "18. Run local end-to-end check: start backend (migrations + import), start frontend (dev or built dist), visit /recipe/<sample-id>, verify HTML, images, and fallback behavior match legacy output.",
+      "19. Add one or two automated smoke tests (headless browser) that load a sample detail page and assert #header text, ingredients <pre>, and that image element is either visible or hidden per fallback rules.",
+      "20. Document deployment steps: ensure backend migrations/import run in staging/production, IMAGES_STATIC_DIR populated or CDN configured, CORS allows frontend, and update README with the endpoint shape and how to re-import if needed."
     ]
   },
   "history": [
@@ -804,6 +816,126 @@
       "summary": "Cleanup complete.\n\nActions performed\n- Moved one-off import script:\n  - backend/scripts/import_legacy_recipes.py -> backend/tools/import_legacy_recipes.py\n  - Removed now-empty backend/scripts directory.\n- Removed temporary mock servers (any /tmp/mock_server*.js files).\n- Added documentation: backend/README_IMPORT.md describing:\n  - legacy endpoint JSON shapes (list and detail),\n  - how to run migrations and re-import legacy recipes,\n  - dry-run vs full import, image handling, and safety notes.\n",
       "success": true,
       "timestamp": "2026-08-01T06:43:19.728Z"
+    },
+    {
+      "task": "1. Inspect legacy/recipelookup.js and recipe detail HTML (legacy/recipe-template.html) to list exact DOM IDs, classes, text, image resolution sequence, and error/fallback behaviors.",
+      "summary": "Files inspected: legacy/recipelookup.js and legacy/recipe-template.html\n\nImportant DOM IDs and classes\n1. img: id=\"image\", class=\"foodpic\" (inside <div class=\"image-container\">).  \n2. Title: <div class=\"title\" id=\"header\"> — recipe name.  \n3. Info: <div class=\"info\" id=\"info\"> — short metadata/notes.  \n4. Ingredients: <div class=\"ingredients\" id=\"ingredients\"> — content set as <pre>.  \n5. Instructions: <div class=\"instructions\" id=\"instructions\"> — content set as <pre>.  \n6. Other page wrappers:",
+      "success": true,
+      "timestamp": "2026-08-01T06:56:33.180Z"
+    },
+    {
+      "task": "2. Verify Postgres recipes table contains fields required by legacy detail (title, ingredients, instructions, info, image_path) and document any missing mappings.",
+      "summary": "Verified — Postgres table contains all fields the legacy detail needs.\n\nPresent columns (from backend/models.py and migrations)\n- id: TEXT / String (PK) — preserves legacy document IDs  \n- title: VARCHAR(255) / String NOT NULL — recipe title (legacy title)  \n- ingredients: TEXT / String NOT NULL — raw text shown inside <pre>  \n- instructions: TEXT / String NOT NULL — raw text shown inside <pre>  \n- info: TEXT / String NULL — short metadata/notes (legacy info)  \n- image_path: VARCHAR(255) / Strin",
+      "success": true,
+      "timestamp": "2026-08-01T06:57:02.288Z"
+    },
+    {
+      "task": "3. Design and document the JSON shape the endpoint must return to match recipelookup.js (title, ingredients, instructions, info, optional image_path).",
+      "summary": "JSON shape (application/json), 200 OK:\n\n{\n  \"title\": \"string\",               // recipe title (used for page title and #header)\n  \"ingredients\": \"string\",         // raw text (render inside <pre>)\n  \"instructions\": \"string\",        // raw text (render inside <pre>)\n  \"info\": \"string | null\",         // optional short metadata/notes\n  \"image_path\": \"string | null\"    // optional relative or absolute path (may omit extension)\n}\n\nExample:\n{\n  \"title\":\"Karjalanpaisti\",\n  \"ingredients\":\"1 kg lihaa\\nSu",
+      "success": true,
+      "timestamp": "2026-08-01T06:57:12.600Z"
+    },
+    {
+      "task": "4. Add a repository function that fetches a single recipe by id from Postgres and returns a plain dict matching the legacy shape.",
+      "summary": "Done — repository function added.\n\nDetails:\n- File: backend/repositories/recipes.py\n- Function: fetch_by_id_for_legacy(db: Session, recipe_id: str) -> Optional[Dict[str,str]]\n- Returns a plain dict validated by Pydantic LegacyRecipeDetail with keys: title, ingredients, instructions, info, image_path (empty string if not set). Returns None when recipe not found.\n\nNext recommended step: implement the FastAPI GET /api/recipes/{id} endpoint that calls this function, returns 200/404, and includes log",
+      "success": true,
+      "timestamp": "2026-08-01T06:57:26.141Z"
+    },
+    {
+      "task": "5. Add/confirm a Pydantic response model for the legacy detail shape and use it to validate repository output.",
+      "summary": "Confirmed — a Pydantic model for the legacy detail already exists and is being used for validation.\n\nModel (backend/schemas.py)\n- LegacyRecipeDetail:\n  - title: str\n  - ingredients: str\n  - instructions: str\n  - info: Optional[str]\n  - image_path: Optional[str]\n\nNotes\n- repository.fetch_by_id_for_legacy constructs a LegacyRecipeDetail and returns detail.dict(), so output is validated before returning.\n- Recommendation: return image_path as null (None) when absent rather than an empty string to m",
+      "success": true,
+      "timestamp": "2026-08-01T06:57:37.087Z"
+    },
+    {
+      "task": "6. Implement a FastAPI GET endpoint /api/recipes/{recipe_id} that uses the repository, validates via Pydantic, returns 200 with the legacy shape, and returns 404 when missing.",
+      "summary": "Implemented the endpoint.\n\nWhat changed\n- Updated backend/routers/recipes.py:\n  - GET /api/recipes/{recipe_id} now returns LegacyRecipeDetail (legacy shape).\n  - Uses repositories.fetch_by_id_for_legacy(db, recipe_id) to get a validated dict.\n  - Logs request receipt and result, returns 404 when missing, and returns 500 on unexpected errors.\n\nNotes\n- The repository already returns a dict validated by the LegacyRecipeDetail Pydantic model, so the endpoint simply returns that dict (FastAPI will en",
+      "success": true,
+      "timestamp": "2026-08-01T06:58:06.776Z"
+    },
+    {
+      "task": "7. Add try/except and logging to the endpoint to return 500 on server errors and log stack traces for debugging.",
+      "summary": "Done — endpoint now has robust error handling and logging.\n\nWhat I changed\n- backend/routers/recipes.py:\n  - get_recipe (GET /api/recipes/{recipe_id}) wrapped in try/except.\n  - Logs request receipt and client IP, logs returns, and uses logger.exception(...) on unexpected errors (includes stack trace).\n  - Returns HTTP 404 when recipe missing and HTTP 500 on server errors.\n\nAlso confirmed list endpoint has matching try/except + logging.\n\nNext step\n- Run backend (or pytest) to validate logs and r",
+      "success": true,
+      "timestamp": "2026-08-01T06:58:15.858Z"
+    },
+    {
+      "task": "8. Ensure the endpoint includes image_path (prefer DB value; if missing, return a relative legacy path like /recipes/img/{id}) and document the chosen strategy.",
+      "summary": "Done — repository now returns a meaningful image_path for recipe details.\n\nWhat changed\n- backend/repositories/recipes.py (fetch_by_id_for_legacy):\n  - image_path is now set to:\n    - rec.image_path if present (preferred DB value), otherwise\n    - \"/recipes/img/{recipe_id}\" (legacy relative path without extension).\n  - LegacyRecipeDetail is constructed with that image_path and returned.\n\nChosen strategy (documented)\n- Prefer DB-stored image_path when available (can be relative or absolute URL). ",
+      "success": true,
+      "timestamp": "2026-08-01T06:58:31.174Z"
+    },
+    {
+      "task": "9. If backend will serve images, add StaticFiles mounting using IMAGES_STATIC_DIR and IMAGES_URL_PREFIX and validate file permissions and URL accessibility.",
+      "summary": "StaticFiles mounting added and config extended.\n\nWhat changed\n- backend/config.py:\n  - Added settings: serve_images_from_backend (bool), images_static_dir, images_url_prefix, images_base_url.\n- backend/main.py:\n  - If settings.serve_images_from_backend is true, mounts StaticFiles at settings.images_url_prefix serving files from settings.images_static_dir.\n  - Logs a warning if the static directory doesn't exist and logs success or exception.\n\nNotes\n- The environment here lacks pydantic-settings ",
+      "success": true,
+      "timestamp": "2026-08-01T06:59:39.577Z"
+    },
+    {
+      "task": "10. Add unit tests for the repository function and endpoint: success case, 404 case, and error case (mock DB).",
+      "summary": "Added unit and endpoint tests:\n\n- backend/tests/test_recipe_detail.py includes:\n  - test_fetch_by_id_success: repo returns expected dict for existing recipe\n  - test_fetch_by_id_not_found: repo returns None for missing id\n  - test_fetch_by_id_db_error: repo surfaces DB exceptions\n  - test_get_recipe_success: endpoint returns 200 and expected fields\n  - test_get_recipe_not_found: endpoint returns 404\n  - test_get_recipe_server_error: monkeypatches repository to raise and asserts endpoint returns ",
+      "success": true,
+      "timestamp": "2026-08-01T07:00:12.117Z"
+    },
+    {
+      "task": "11. Create an import/verification checklist to confirm imported recipe detail fields match legacy Firestore samples (spot-check N items).",
+      "summary": "1. Backup production DB snapshot before changes.  \n2. Ensure migrations applied: run python backend/apply_migrations.py and verify no errors.  \n3. Run import in dry-run mode and confirm transformed row samples look correct.  \n4. Run full import (IMPORT_DRY_RUN=0) and capture import log (counts inserted/skipped/failed).  \n5. Verify total counts: SELECT COUNT(*) FROM recipes and compare to legacy record count.  \n6. Spot-check N=10 random IDs from legacy: compare title, ingredients, instructions, i",
+      "success": true,
+      "timestamp": "2026-08-01T07:00:33.745Z"
+    },
+    {
+      "task": "12. Design a React route /recipe/:id and a RecipeDetail component that reproduces legacy DOM (ids: #header, #info, #ingredients, #instructions; image container .image-container with img#image.foodpic).",
+      "summary": "1. Add route: /recipe/:id in router (React Router) mapping to RecipeDetail component.  \n2. Component responsibility: fetch GET /api/recipes/:id (recipeAPI.getById or legacy endpoint), show loading, render or show 404/error.  \n3. State: {isLoading, isError, isNotFound, recipe|null, imageIndex, hasImageError}.  \n4. Fetch on mount/useEffect using id param; set document.title = `${title} resepti` on success.  \n5. Render exact legacy DOM:\n   - <div class=\"image-container\"><img id=\"image\" class=\"foodp",
+      "success": true,
+      "timestamp": "2026-08-01T07:00:51.144Z"
+    },
+    {
+      "task": "13. Implement client-side image resolution logic in the component: use image_path first, then try /recipes/img/{id}.png, .jpg, .jpeg, then /fallback.png; hide image element if all fail.",
+      "summary": "Implemented — RecipeImage now performs the requested resolution order.\n\nSummary (changes)\n- File: frontend/src/components/RecipeImage.tsx\n- Order tried: image_path (if present) → recipes/img/{id}.png → .jpg → .jpeg → /fallback.png\n- Behavior: on each onError the component advances to the next source; when exhausted it hides the image (returns null).\n\nIf you want, run the production build + a quick smoke check against the backend (or run the component tests). Which should I do next?",
+      "success": true,
+      "timestamp": "2026-08-01T07:01:46.319Z"
+    },
+    {
+      "task": "14. Implement loading state UI matching legacy text and structure (e.g., initial placeholders), and display 404-style message when API returns 404.",
+      "summary": "Loading and 404 UI implemented and type-checked.\n\nSummary of changes\n- useRecipeDetail: added notFound flag (detects 404 from API) and distinct error handling.\n- RecipeTitle, RecipeInfo, RecipeIngredients, RecipeInstructions: now render legacy IDs (#header, #info, #ingredients, #instructions) to match legacy DOM.\n- RecipeDetailPage:\n  - Loading state shows <div id=\"header\" class=\"title\">Loading</div> (matches legacy template).\n  - 404 state shows <div id=\"header\" class=\"title\"><p> Could not load",
+      "success": true,
+      "timestamp": "2026-08-01T07:04:19.614Z"
+    },
+    {
+      "task": "15. Ensure component inserts the legacy element IDs and classes exactly so existing CSS applies pixel-perfect.",
+      "summary": "Verified — all legacy IDs and classes are present in the React code:\n\n- id=\"header\": RecipeTitle and RecipeDetailPage loading/404 states\n- id=\"info\": RecipeInfo\n- id=\"ingredients\": RecipeIngredients\n- id=\"instructions\": RecipeInstructions\n- id=\"image\" & className=\"foodpic\": RecipeImage (also in ResponsiveRecipeImage)\n- className=\"image-container\": RecipeImage/ResponsiveRecipeImage\n- className=\"recipe\": RecipeDetail and page wrappers\n\nEverything matches legacy DOM selectors so existing CSS should",
+      "success": true,
+      "timestamp": "2026-08-01T07:04:42.019Z"
+    },
+    {
+      "task": "16. Add client-side error handling: network failures show a user-friendly error and log to console; the component should not crash on malformed data.",
+      "summary": "Client-side error handling added and validated.\n\nWhat changed\n- frontend/src/hooks/useRecipeDetail.ts:\n  - After fetching, performs defensive validation (title, ingredients, instructions are strings).\n  - If malformed data is returned, logs details to console, sets a user-friendly error message (\"Reseptin tiedot ovat virheelliset\") and avoids crashing.\n  - Network/errors still set friendly messages; 404 sets notFound flag.\n\nBehavior\n- Network failure: user sees \"Reseptin lataus epäonnistui: <mes",
+      "success": true,
+      "timestamp": "2026-08-01T07:05:14.038Z"
+    },
+    {
+      "task": "17. Write component unit tests (rendering, loading, 404, image-fallback logic) and an integration test using TestClient + TestRenderer or Playwright to assert DOM and content.",
+      "summary": "Tests added.\n\nFiles created:\n- frontend/src/__tests__/RecipeDetail.test.tsx — Jest + React Testing Library unit tests: rendering, loading, 404, network error.\n- frontend/src/__tests__/RecipeImage.test.tsx — unit tests for image fallback sequence and hide-on-final-failure behavior.\n- frontend/tests/integration/recipe_detail.spec.ts — Playwright E2E spec (navigates to /recipe/:id and asserts legacy selectors).\n\nNotes and next steps\n- These tests assume the following dev dependencies are installed ",
+      "success": true,
+      "timestamp": "2026-08-01T07:08:21.203Z"
+    },
+    {
+      "task": "18. Run local end-to-end check: start backend (migrations + import), start frontend (dev or built dist), visit /recipe/<sample-id>, verify HTML, images, and fallback behavior match legacy output.",
+      "summary": "Quick status and plan (short):\n\n- What ran here: created a local sqlite DB, applied migration SQL, inserted sample recipe id=smoke1, and started a static server serving frontend/dist at http://127.0.0.1:8001.\n- What failed / blocked: starting the backend server (uvicorn) and running FastAPI TestClient failed because Python deps (sqlalchemy/uvicorn) are not installed in this environment.\n- Client-side JS (SPA) could not be exercised here because a real browser / Playwright was not available.\n\nHow",
+      "success": true,
+      "timestamp": "2026-08-01T07:09:59.143Z"
+    },
+    {
+      "task": "19. Add one or two automated smoke tests (headless browser) that load a sample detail page and assert #header text, ingredients <pre>, and that image element is either visible or hidden per fallback rules.",
+      "summary": "Smoke tests added:\n\n- frontend/tests/e2e/recipe_detail.smoke.spec.ts\n  - Test 1: header + ingredients (<pre> or #ingredients) presence and non-empty content.\n  - Test 2: image fallback — intercepts image requests to return 404 and asserts #image is removed.\n\nRun instructions (locally or CI):\n1. Install Playwright and browsers:\n   - npm i -D @playwright/test\n   - npx playwright install\n2. Serve frontend (example):\n   - cd frontend && npm run build\n   - cd frontend/dist && python3 -m http.server 8",
+      "success": true,
+      "timestamp": "2026-08-01T07:10:43.845Z"
+    },
+    {
+      "task": "20. Document deployment steps: ensure backend migrations/import run in staging/production, IMAGES_STATIC_DIR populated or CDN configured, CORS allows frontend, and update README with the endpoint shape and how to re-import if needed.",
+      "summary": "Documentation files added:\n\n- backend/DEPLOYMENT.md — deployment checklist, env vars, migration/import commands, image hosting options, verification steps, and smoke-test guidance.\n- README.md (repo root) — quick links to deployment and import docs.\n\nI put endpoint shapes and re-import instructions in backend/README_IMPORT.md already; DEPLOYMENT.md links to it. Want a Docker Compose + small run script to perform a one-command staging deploy (Postgres + backend + static frontend) next?",
+      "success": true,
+      "timestamp": "2026-08-01T07:12:01.846Z"
     }
   ]
 }

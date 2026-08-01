@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { recipeAPI, LegacyListItem } from '../api/recipes';
+import { useEffect, useState } from 'react';
+import { recipeAPI } from '../api/recipes';
+import type { LegacyListItem } from '../api/recipes';
 
 /**
  * LegacyRecipeList

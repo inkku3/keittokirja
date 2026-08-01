@@ -6,7 +6,7 @@ import { DarkModeButton } from './DarkModeButton';
 export function RecipeDetailPage() {
   const { recipeId } = useParams<{ recipeId: string }>();
   const navigate = useNavigate();
-  const { recipe, isLoading, error } = useRecipeDetail({ recipeId });
+  const { recipe, isLoading, error, notFound } = useRecipeDetail({ recipeId });
 
   if (error) {
     return (
@@ -31,7 +31,20 @@ export function RecipeDetailPage() {
     return (
       <div className="content">
         <div className="recipe">
-          <div className="title">Ladataan...</div>
+          <div id="header" className="title">Loading</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="content">
+        <div className="recipe">
+          <div id="header" className="title"><p> Could not load recipe.</p></div>
+          <div className="buttons">
+            <button className="toggleDark" onClick={() => navigate('/')}>Takaisin alkuun</button>
+          </div>
         </div>
       </div>
     );
@@ -41,7 +54,7 @@ export function RecipeDetailPage() {
     return (
       <div className="content">
         <div className="recipe">
-          <div className="title">Reseptiä ei löytynyt</div>
+          <div id="header" className="title">Reseptiä ei löytynyt</div>
         </div>
       </div>
     );

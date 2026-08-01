@@ -5,5 +5,5 @@ interface RecipeInfoProps {
 
 export function RecipeInfo({ info, className = 'info' }: RecipeInfoProps) {
   if (!info) return null;
-  return <div className={className}>{info}</div>;
+  return <div id="info" className={className}>{info}</div>;
 }

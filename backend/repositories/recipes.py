@@ -45,11 +45,14 @@ def fetch_by_id_for_legacy(db: Session, recipe_id: str) -> Optional[Dict[str, st
     if not rec:
         return None
 
+    # Determine image_path: prefer stored image_path; otherwise return legacy relative path (no extension)
+    image_path = rec.image_path if getattr(rec, 'image_path', None) else f"/recipes/img/{recipe_id}"
+
     detail = LegacyRecipeDetail(
         title=rec.title,
         ingredients=rec.ingredients or "",
         instructions=rec.instructions or "",
         info=rec.info or "",
-        image_path=rec.image_path or "",
+        image_path=image_path,
     )
     return detail.dict()

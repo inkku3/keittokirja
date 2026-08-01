@@ -30,6 +30,21 @@ app.add_middleware(
 app.include_router(migration.router)
 app.include_router(recipes.router)
 
+# Optionally mount static files for recipe images
+if settings.serve_images_from_backend:
+    try:
+        from fastapi.staticfiles import StaticFiles
+        import os
+
+        static_dir = os.path.abspath(settings.images_static_dir)
+        if not os.path.isdir(static_dir):
+            logger.warning('IMAGES_STATIC_DIR %s does not exist; StaticFiles mount will still be created but may return 404s', static_dir)
+
+        app.mount(settings.images_url_prefix, StaticFiles(directory=static_dir), name="recipe_images")
+        logger.info('Mounted StaticFiles for recipe images at %s -> %s', settings.images_url_prefix, static_dir)
+    except Exception as e:
+        logger.exception('Failed to mount StaticFiles for images: %s', e)
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""

@@ -4,5 +4,5 @@ interface RecipeTitleProps {
 }
 
 export function RecipeTitle({ title, className = 'title' }: RecipeTitleProps) {
-  return <div className={className}>{title}</div>;
+  return <div id="header" className={className}>{title}</div>;
 }

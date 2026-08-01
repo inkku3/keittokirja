@@ -1,12 +1,9 @@
-import { useState } from 'react';
 import { MenuContainer } from '../components/MenuContainer';
 import { MainContent } from '../components/MainContent';
 import { DarkModeProvider } from '../components/DarkModeProvider';
 import { LegacyRecipeList } from '../components/LegacyRecipeList';
 
 export function HomePage() {
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
   const handleRecipeSelect = (recipeId: string) => {
     window.location.href = `/recipe/${recipeId}`;
   };
@@ -19,8 +16,8 @@ export function HomePage() {
     // Legacy list manages search internally; keep signature for MainContent
   };
 
-  const handleSearchTermChange = (term: string) => {
-    setSearchQuery(term);
+  const handleSearchTermChange = (_term: string) => {
+    // intentionally unused; LegacyRecipeList manages its own search
   };
 
   return (

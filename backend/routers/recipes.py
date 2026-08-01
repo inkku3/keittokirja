@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, func
 from database import get_db
 from models import Recipe as RecipeModel
-from schemas import Recipe, LegacyListItem
+from schemas import Recipe, LegacyListItem, LegacyRecipeDetail
 from typing import List
 import random
-from repositories.recipes import fetch_all_for_legacy
+from repositories.recipes import fetch_all_for_legacy, fetch_by_id_for_legacy
 
 router = APIRouter(prefix="/api/recipes", tags=["recipes"])
 
@@ -120,25 +120,33 @@ async def get_random_recipe(db: Session = Depends(get_db)) -> Recipe:
     
     return random_recipe
 
-@router.get("/{recipe_id}", response_model=Recipe)
+@router.get("/{recipe_id}", response_model=LegacyRecipeDetail)
 async def get_recipe(
+    request: Request,
     recipe_id: str = Path(..., description="Recipe ID"),
     db: Session = Depends(get_db)
-) -> Recipe:
+) -> LegacyRecipeDetail:
     """
-    Get a specific recipe by ID.
-    
-    Path parameters:
-    - recipe_id: The unique identifier of the recipe
-    
-    Returns the full recipe details including title, ingredients, instructions, tags, and info.
+    Get a specific recipe by ID in the legacy detail shape.
+
+    Returns 200 with LegacyRecipeDetail or 404 if not found.
     """
-    recipe = db.query(RecipeModel).filter(RecipeModel.id == recipe_id).first()
-    
-    if not recipe:
-        raise HTTPException(status_code=404, detail=f"Recipe with id '{recipe_id}' not found")
-    
-    return recipe
+    try:
+        client_addr = request.client.host if request.client else 'unknown'
+        logger.info("Received recipe detail request for id=%s from %s", recipe_id, client_addr)
+
+        detail = fetch_by_id_for_legacy(db, recipe_id)
+        if detail is None:
+            logger.info("Recipe not found: %s", recipe_id)
+            raise HTTPException(status_code=404, detail=f"Recipe with id '{recipe_id}' not found")
+
+        logger.info("Returning recipe detail for id=%s to %s", recipe_id, client_addr)
+        return detail
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to fetch recipe detail for %s: %s", recipe_id, str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve recipe")
 
 
 

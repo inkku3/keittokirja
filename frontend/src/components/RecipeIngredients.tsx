@@ -12,7 +12,7 @@ export function RecipeIngredients({
   if (!ingredients) return null;
 
   return (
-    <div className={className}>
+    <div id="ingredients" className={className}>
       {title && <h3>{title}</h3>}
       <pre>{ingredients}</pre>
     </div>

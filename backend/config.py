@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 
 class Settings(BaseSettings):
     database_url: str
@@ -7,6 +7,12 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_debug: bool = True
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
+
+    # Static image serving options
+    serve_images_from_backend: bool = False
+    images_static_dir: str = "./static/recipes/img"
+    images_url_prefix: str = "/recipes/img"
+    images_base_url: Optional[str] = ""
     
     # Firebase configuration for migration
     firebase_api_key: str = ""
