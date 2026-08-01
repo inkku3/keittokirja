@@ -1,7 +1,15 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routers import migration, recipes
+
+# Basic logging configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger('keittokirja')
 
 app = FastAPI(
     title="Keittokirja API",

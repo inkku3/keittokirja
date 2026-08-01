@@ -1,39 +1,45 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, Path
+from fastapi import APIRouter, Depends, Query, HTTPException, Path, Request
+import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, func
 from database import get_db
 from models import Recipe as RecipeModel
-from schemas import Recipe
+from schemas import Recipe, LegacyListItem
 from typing import List
 import random
+from repositories.recipes import fetch_all_for_legacy
 
 router = APIRouter(prefix="/api/recipes", tags=["recipes"])
 
-@router.get("/", response_model=List[Recipe])
+logger = logging.getLogger('keittokirja.routers.recipes')
+
+@router.get("/", response_model=List[LegacyListItem])
 async def list_recipes(
+    request: Request,
     sort_by: str = Query("title", description="Field to sort by (title)"),
     order: str = Query("asc", description="Sort order (asc or desc)"),
     db: Session = Depends(get_db)
-) -> List[Recipe]:
+) -> List[LegacyListItem]:
     """
-    List all recipes with sorting support.
-    
-    Query parameters:
-    - sort_by: Field to sort by (default: title)
-    - order: Sort order - 'asc' for ascending, 'desc' for descending (default: asc)
-    
-    Returns a list of recipes sorted by the specified field.
+    List all recipes in the legacy {name, url, image_path} shape.
+
+    Returns 200 with an empty list if no recipes are found.
+    Returns 500 if an unexpected server error occurs.
     """
-    # Build the sort query
-    sort_column = getattr(RecipeModel, sort_by, RecipeModel.title)
-    
-    if order.lower() == "desc":
-        query = db.query(RecipeModel).order_by(desc(sort_column))
-    else:
-        query = db.query(RecipeModel).order_by(asc(sort_column))
-    
-    recipes = query.all()
-    return recipes
+    try:
+        client_addr = request.client.host if request.client else 'unknown'
+        logger.info("Received legacy recipe list request from %s (sort_by=%s, order=%s)", client_addr, sort_by, order)
+
+        items = fetch_all_for_legacy(db)
+        if items is None:
+            items = []
+
+        logger.info("Legacy recipe list: returning %d items to %s", len(items), client_addr)
+        return items
+    except Exception as e:
+        logger.exception("Failed to fetch recipes for legacy list: %s", str(e))
+        # Return a 500 to signal server error while keeping the response shape consistent on success
+        raise HTTPException(status_code=500, detail="Failed to retrieve recipes")
 
 @router.get("/search", response_model=List[Recipe])
 async def search_recipes(

@@ -12,11 +12,23 @@ export interface Recipe {
   updated_at: string;
 }
 
+export interface LegacyListItem {
+  name: string;
+  url: string;
+  image_path?: string;
+}
+
 export const recipeAPI = {
-  // List all recipes
+  // List all recipes (full recipe objects)
   listAll: async (sortBy = 'title', order = 'asc'): Promise<Recipe[]> => {
     const response = await api.get('/api/recipes/', { params: { sort_by: sortBy, order } });
     return response.data;
+  },
+
+  // Legacy list endpoint that returns simple { name, url, image_path } items
+  listLegacy: async (): Promise<LegacyListItem[]> => {
+    const response = await api.get('/api/recipes/');
+    return response.data as LegacyListItem[];
   },
 
   // Search recipes by title

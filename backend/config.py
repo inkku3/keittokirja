@@ -22,7 +22,18 @@ class Settings(BaseSettings):
     
     @property
     def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",")]
+        """Return parsed CORS origins.
+
+        - If cors_origins is '*' (single star) return ['*'] to allow all origins.
+        - If empty or only whitespace, return an empty list.
+        - Otherwise, split by comma and trim entries.
+        """
+        raw = (self.cors_origins or "").strip()
+        if raw == "*":
+            return ["*"]
+        if not raw:
+            return []
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
     
     @property
     def firebase_config(self) -> dict:

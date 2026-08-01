@@ -12,7 +12,7 @@
 ```
 
 3. Data migration
-
+~~
 ```
 /plan Using this schema:
 
@@ -41,7 +41,7 @@ When real credentials are supplied later, only the DATABASE_URL value should nee
 ```
 
 4. Recipe list endpoint + component
-
+~~
 ```
 /plan Add a FastAPI GET endpoint in /backend that returns the recipe list from PostgreSQL in the same shape that script.js and recipelookup.js currently expect. Then build a React component in /frontend that calls this endpoint and renders the recipe list identically to how legacy/script.js and legacy/index.html render it today.
 ```

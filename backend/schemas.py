@@ -28,3 +28,20 @@ class Recipe(RecipeBase):
     
     class Config:
         from_attributes = True
+
+# Models matching the legacy JSON shapes
+class LegacyListItem(BaseModel):
+    name: str
+    url: str
+    image_path: Optional[str] = None
+
+class LegacyRecipeDetail(BaseModel):
+    title: str
+    ingredients: str
+    instructions: str
+    info: Optional[str] = None
+    image_path: Optional[str] = None
+
+    class Config:
+        # allow population from ORM objects or attribute access
+        from_attributes = True
