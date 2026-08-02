@@ -12,17 +12,23 @@ import type { LegacyListItem } from '../api/recipes';
 export function LegacyRecipeList() {
   const [items, setItems] = useState<LegacyListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       try {
         setIsLoading(true);
+        setError(null);
         const data = await recipeAPI.listLegacy();
         if (mounted) setItems(Array.isArray(data) ? data : []);
-      } catch (err) {
+      } catch (err: any) {
+        // Log and surface a friendly message without crashing the UI
         console.error('Failed to load legacy recipe list', err);
-        if (mounted) setItems([]);
+        if (mounted) {
+          setError('Reseptien haku epäonnistui');
+          setItems([]);
+        }
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -35,6 +41,10 @@ export function LegacyRecipeList() {
 
   if (isLoading) {
     return <div className="recipelist" id="recipes">Ladataan reseptejä...</div>;
+  }
+
+  if (error) {
+    return <div className="recipelist" id="recipes">{error}</div>;
   }
 
   if (!items || items.length === 0) {

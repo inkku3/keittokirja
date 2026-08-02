@@ -25,24 +25,82 @@ export interface LegacySearchItem {
   image_path?: string | null;
 }
 
+function isObject(v: any): v is Record<string, any> {
+  return v !== null && typeof v === 'object';
+}
+
+function validateRecipe(item: any): asserts item is Recipe {
+  if (!isObject(item)) throw new TypeError('Recipe is not an object');
+  if (typeof item.id !== 'string') throw new TypeError('Recipe.id missing or not a string');
+  if (typeof item.title !== 'string') throw new TypeError('Recipe.title missing or not a string');
+  if (typeof item.ingredients !== 'string') throw new TypeError('Recipe.ingredients missing or not a string');
+  if (typeof item.instructions !== 'string') throw new TypeError('Recipe.instructions missing or not a string');
+  // created_at/updated_at may be optional on some backends, but if present should be strings
+  if (item.created_at != null && typeof item.created_at !== 'string') throw new TypeError('Recipe.created_at not a string');
+  if (item.updated_at != null && typeof item.updated_at !== 'string') throw new TypeError('Recipe.updated_at not a string');
+}
+
+function validateLegacyListItem(item: any): LegacyListItem {
+  if (!isObject(item)) throw new TypeError('Legacy list item is not an object');
+
+  // Accept either legacy shape (name + url) or full recipe object (title + id)
+  if (typeof item.name === 'string' && typeof item.url === 'string') {
+    return { name: item.name, url: item.url, image_path: item.image_path };
+  }
+
+  if (typeof item.title === 'string' && (typeof item.id === 'string' || typeof item.id === 'number')) {
+    return { name: item.title, url: `recipes/${item.id}`, image_path: item.image_path };
+  }
+
+  throw new TypeError('Legacy list item missing name/url or title/id');
+}
+
 function validateSearchItem(item: any): asserts item is LegacySearchItem {
-  if (!item || typeof item !== 'object') throw new TypeError('Search item is not an object');
+  if (!isObject(item)) throw new TypeError('Search item is not an object');
   if (typeof item.name !== 'string' || typeof item.url !== 'string') {
     throw new TypeError('Search item missing required fields: name or url');
   }
+}
+
+function logMalformed(context: string, data: any, err?: unknown) {
+  // Structured log to aid diagnostics without exposing sensitive info
+  console.error(`[API VALIDATION] ${context}`, { data, error: err });
 }
 
 export const recipeAPI = {
   // List all recipes (full recipe objects)
   listAll: async (sortBy = 'title', order = 'asc'): Promise<Recipe[]> => {
     const response = await api.get('/api/recipes/', { params: { sort_by: sortBy, order } });
-    return response.data;
+    const data = response.data;
+    if (!Array.isArray(data)) {
+      logMalformed('listAll: expected array', data);
+      throw new TypeError('Invalid response from server');
+    }
+    try {
+      return data.map((it: any) => {
+        validateRecipe(it);
+        return it as Recipe;
+      });
+    } catch (err) {
+      logMalformed('listAll: malformed recipe item', data, err);
+      throw err;
+    }
   },
 
   // Legacy list endpoint that returns simple { name, url, image_path } items
   listLegacy: async (): Promise<LegacyListItem[]> => {
     const response = await api.get('/api/recipes/');
-    return response.data as LegacyListItem[];
+    const data = response.data;
+    if (!Array.isArray(data)) {
+      logMalformed('listLegacy: expected array', data);
+      throw new TypeError('Invalid response from server');
+    }
+    try {
+      return data.map((it: any) => validateLegacyListItem(it));
+    } catch (err) {
+      logMalformed('listLegacy: malformed legacy item', data, err);
+      throw err;
+    }
   },
 
   // Search recipes by title (legacy-compatible endpoint at /api/search)
@@ -93,18 +151,45 @@ export const recipeAPI = {
   // Filter recipes by tags
   filterByTags: async (tags: string): Promise<Recipe[]> => {
     const response = await api.get('/api/recipes/filter', { params: { tags } });
-    return response.data;
+    const data = response.data;
+    if (!Array.isArray(data)) {
+      logMalformed('filterByTags: expected array', data);
+      throw new TypeError('Invalid response from server');
+    }
+    try {
+      return data.map((it: any) => {
+        validateRecipe(it);
+        return it as Recipe;
+      });
+    } catch (err) {
+      logMalformed('filterByTags: malformed recipe item', data, err);
+      throw err;
+    }
   },
 
   // Get random recipe
   getRandom: async (): Promise<Recipe> => {
     const response = await api.get('/api/recipes/random');
-    return response.data;
+    const data = response.data;
+    try {
+      validateRecipe(data);
+      return data as Recipe;
+    } catch (err) {
+      logMalformed('getRandom: malformed recipe', data, err);
+      throw err;
+    }
   },
 
   // Get recipe by ID
   getById: async (id: string): Promise<Recipe> => {
     const response = await api.get(`/api/recipes/${id}`);
-    return response.data;
+    const data = response.data;
+    try {
+      validateRecipe(data);
+      return data as Recipe;
+    } catch (err) {
+      logMalformed(`getById ${id}: malformed recipe`, data, err);
+      throw err;
+    }
   },
 };
