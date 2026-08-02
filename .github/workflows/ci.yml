@@ -92,6 +92,6 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright smoke test
+      - name: Run Playwright smoke tests
         run: |
-          npx playwright test frontend/tests/e2e/recipe-detail.spec.ts --reporter=list
+          npx playwright test frontend/tests/e2e/recipe-detail.spec.ts frontend/tests/e2e/search.smoke.spec.ts --reporter=list
