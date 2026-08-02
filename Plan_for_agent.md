@@ -47,13 +47,13 @@ When real credentials are supplied later, only the DATABASE_URL value should nee
 ```
 
 5. Recipe detail / lookup
-
+~~
 ```
 /plan Migrate the behaviour of legacy/recipelookup.js: add a FastAPI endpoint to fetch a single recipe's full detail by id/slug from PostgreSQL, and a React component/route that displays it exactly as the legacy recipe lookup does, including any fallback/error states recipelookup.js currently handles.
 ```
 
 6. Search
-
+~~
 ```
 /plan Migrate legacy/search.js: implement similar search behaviour (matching fields, matching filtering/sorting logic, matching how results update as the user types) using a FastAPI search endpoint against PostgreSQL and a React search component with identical UX to the legacy version.
 ```
