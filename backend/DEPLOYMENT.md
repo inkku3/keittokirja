@@ -98,3 +98,34 @@ Notes
 
 Further reading
 - API shapes and import instructions: backend/README_IMPORT.md
+
+Search endpoint: shape & tuning
+- Endpoint: GET /api/search
+  - Query params:
+    - q (optional): substring query to match title (case-insensitive). If omitted or empty, returns full alphabetically-sorted list (legacy initial load).
+    - tags (optional): comma-separated tokens; recipe must contain all tokens (AND semantics) — tokens compared against CSV `tags` column.
+    - limit, offset: pagination controls (limit default 100, server-max 1000).
+  - Response: 200 OK with array of LegacySearchItem: { name, url, tags?, image_path? }
+  - Headers: responses include conservative caching headers (Cache-Control: private, max-age=0, no-store) to avoid stale per-keystroke results. Adjust CDN/edge configuration if you enable caching by query string.
+
+Index maintenance & performance tips
+- Create indexes using migration 0002_add_search_indexes.sql. In production, create the indexes using CONCURRENTLY to avoid locks:
+  psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+  psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY idx_recipes_title_trgm ON recipes USING GIN (lower(title) gin_trgm_ops);"
+  psql "$DATABASE_URL" -c "CREATE INDEX CONCURRENTLY idx_recipes_tags_gin ON recipes USING GIN ((string_to_array(tags, ',')));"
+- After index creation run: VACUUM ANALYZE recipes;
+- If you add a search_vector column and index (optional), populate it via the importer or a migration and add a trigger to keep it up-to-date. See backend/SEARCH_INDEXES.md for details.
+
+Query tuning tips
+- For substring searches, pg_trgm GIN index on lower(title) yields the best performance for LIKE '%%' patterns;
+- For heavy write workloads, consider keeping tags as TEXT[] instead of CSV for simpler queries and indexing (migration recommended).
+- Monitor slow queries (pg_stat_statements) and tune work_mem / planner settings if necessary.
+- If traffic causes per-keystroke load spikes, consider adding a small client-side debounce (e.g., 150-300ms) — this changes legacy UX but reduces load.
+
+Operational checklist
+- Apply migrations (apply_migrations.py) and verify indexes exist.
+- Run importer (dry-run then full import) and spot-check data.
+- Ensure IMAGES_STATIC_DIR is populated and accessible, or set DB.image_path to CDN URLs.
+- Configure CORS_ORIGINS to the frontend origin(s).
+- Run smoke tests (backend/tests and frontend/tests/e2e) in staging before production rollout.
+

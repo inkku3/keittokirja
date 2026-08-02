@@ -1,0 +1,62 @@
+name: E2E smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install backend deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Apply migrations
+        run: python backend/apply_migrations.py
+
+      - name: Optionally import sample data (dry-run by default)
+        env:
+          IMPORT_DRY_RUN: 1
+        run: python backend/tools/import_legacy_recipes.py || true
+
+      - name: Start backend (uvicorn)
+        run: |
+          nohup uvicorn backend.main:app --host 127.0.0.1 --port 8000 > backend.log 2>&1 &
+          sleep 3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: |
+          npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Start frontend preview
+        run: |
+          nohup npx vite preview --port 3000 > frontend.log 2>&1 &
+          sleep 3
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright smoke test
+        run: |
+          npx playwright test frontend/tests/e2e/recipe-detail.spec.ts --reporter=list
