@@ -76,6 +76,21 @@ def test_search_invalid_params(client_with_db):
     assert resp.status_code == 422
 
 
+def test_search_tags_filtering(client_with_db):
+    client = client_with_db
+    # single tag match
+    resp = client.get('/api/search?tags=kala')
+    assert resp.status_code == 200
+    data = resp.json()
+    names = [d['name'] for d in data]
+    assert 'Lohikeitto' in names
+
+    # AND semantics: non-matching combination should return empty
+    resp2 = client.get('/api/search?tags=kala,notag')
+    assert resp2.status_code == 200
+    assert resp2.json() == []
+
+
 def test_search_server_error(monkeypatch, client_with_db):
     client = client_with_db
 
