@@ -13,6 +13,9 @@ export function useSearch() {
   const initialLoaded = useRef(false);
   const initialResults = useRef<LegacySearchItem[]>([]);
 
+  // Simple in-memory cache keyed by `${q}::${tags}` for instant response display
+  const cacheRef = useRef<Map<string, LegacySearchItem[]>>(new Map());
+
   // Abort controller for cancelling in-flight requests
   const abortRef = useRef<AbortController | null>(null);
 
@@ -29,6 +32,7 @@ export function useSearch() {
         if (!mounted) return;
         initialResults.current = items;
         initialLoaded.current = true;
+        cacheRef.current.set(`::`, items);
         // Show initial list until user interacts
         setResults(items);
       } catch (err: any) {
@@ -50,12 +54,20 @@ export function useSearch() {
     };
   }, []);
 
+  const cacheKey = (q: string, t: string) => `${q ?? ''}::${t ?? ''}`;
+
   const setQuery = (q: string) => {
     hasInteracted.current = true;
     setQueryState(q);
 
     // If query is empty after user interaction, legacy hides the list — clear results
     if (!q) {
+      // If user hasn't interacted before and we have initial results, show the full list
+      if (!hasInteracted.current && initialLoaded.current) {
+        setResults(initialResults.current);
+        return;
+      }
+
       setResults([]);
       setIsLoading(false);
       setError(null);
@@ -64,6 +76,16 @@ export function useSearch() {
         try { abortRef.current.abort(); } catch (_) {}
         abortRef.current = null;
       }
+      return;
+    }
+
+    // If cached results exist, show them immediately and then refresh in background
+    const key = cacheKey(q, tags);
+    const cached = cacheRef.current.get(key);
+    if (cached) {
+      setResults(cached);
+      // Refresh in background
+      doSearch(q, tags, { refreshOnly: true });
       return;
     }
 
@@ -77,11 +99,18 @@ export function useSearch() {
     if (hasInteracted.current) {
       // if query is empty, legacy would keep list hidden — don't run
       if (!query) return;
+      const key = cacheKey(query, t);
+      const cached = cacheRef.current.get(key);
+      if (cached) {
+        setResults(cached);
+        doSearch(query, t, { refreshOnly: true });
+        return;
+      }
       doSearch(query, t);
     }
   };
 
-  const doSearch = async (q: string, t: string) => {
+  const doSearch = async (q: string, t: string, opts?: { refreshOnly?: boolean }) => {
     // Cancel previous
     if (abortRef.current) {
       try { abortRef.current.abort(); } catch (_) {}
@@ -89,11 +118,16 @@ export function useSearch() {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setIsLoading(true);
+    if (!opts?.refreshOnly) {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
       const items = await recipeAPI.search({ q, tags: t }, controller.signal);
+      // store in cache
+      const key = cacheKey(q, t);
+      cacheRef.current.set(key, items);
       setResults(items);
     } catch (err: any) {
       if (err?.name === 'CanceledError' || err?.name === 'AbortError') {
