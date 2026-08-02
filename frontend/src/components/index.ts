@@ -9,6 +9,7 @@ export { DarkModeProvider } from './DarkModeProvider';
 export { RandomRecipeButton } from './RandomRecipeButton';
 export { MainContent } from './MainContent';
 export { SearchBar } from './SearchBar';
+export { Search } from './Search';
 export { SearchInput } from './SearchInput';
 export { RecipeList } from './RecipeList';
 export { RecipeListContainer } from './RecipeListContainer';
