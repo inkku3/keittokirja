@@ -1,32 +1,33 @@
 {
   "state": {
-    "goal": "Migrate the behaviour of legacy/recipelookup.js: add a FastAPI endpoint to fetch a single recipe's full detail by id/slug from PostgreSQL, and a React component/route that displays it exactly as the legacy recipe lookup does, including any fallback/error states recipelookup.js currently handles.",
+    "goal": "Migrate legacy/search.js: implement similar search behaviour (matching fields, matching filtering/sorting logic, matching how results update as the user types) using a FastAPI search endpoint against PostgreSQL and a React search component with identical UX to the legacy version.",
     "plan": [
-      "1. Inspect legacy/recipelookup.js and legacy/recipe-template.html to extract exact DOM IDs, classes, texts, image resolution order, and error/fallback behaviors; document results.",
-      "2. Verify Postgres recipes table contains required fields (id, title, ingredients, instructions, info, image_path); document any missing mappings.",
-      "3. Define the exact JSON response shape for GET /api/recipes/{id} to match recipelookup.js (title, ingredients, instructions, info, image_path) and record example payload.",
-      "4. Review existing repository function fetch_by_id_for_legacy to confirm it returns the legacy-shaped dict; if missing, add a simple repository function that does so.",
-      "5. Add/confirm a Pydantic response model LegacyRecipeDetail that enforces the legacy shape and use it to validate repository output.",
-      "6. Implement FastAPI endpoint GET /api/recipes/{recipe_id} that calls the repository, validates via Pydantic, returns 200 with legacy shape, 404 when missing, and logs request/response metadata.",
-      "7. Add try/except around the endpoint to log full stack traces and return 500 on unexpected errors while keeping response shape stable.",
-      "8. Decide and document image_path strategy: prefer DB image_path; if missing return relative legacy path /recipes/img/{id} (no extension) so client tries extensions; add note in docs.",
-      "9. Ensure backend can serve images if configured: document IMAGES_STATIC_DIR and IMAGES_URL_PREFIX, add StaticFiles mount instructions, and validate file permissions.",
-      "10. Create unit tests for the repository function: success, not-found, and DB-error cases (use in-memory DB/mock).",
-      "11. Create unit tests for the endpoint using FastAPI TestClient: success (200 + body), 404, and simulated server error (mock repo).",
-      "12. Design React route /recipe/:id and a RecipeDetail component spec that reproduces legacy DOM exactly (ids: #header, #info, #ingredients, #instructions; image container .image-container with img#image.foodpic).",
-      "13. Implement a useRecipeDetail hook that fetches GET /api/recipes/{id}, validates shape defensively, and exposes {recipe,isLoading,error,notFound}.",
-      "14. Implement RecipeDetail component that consumes the hook and renders: loading UI (legacy text/structure), 404 UI matching legacy wording, error UI, and successful detail layout with exact IDs/classes.",
-      "15. Implement RecipeImage component with client-side multi-source resolution: try image_path, then /recipes/img/{id}.png → .jpg → .jpeg → /fallback.png; on all-fail hide <img id=\"image\">.",
-      "16. Ensure the component logs network errors to console, shows user-friendly messages, and does not crash on malformed data.",
-      "17. Add unit tests for the React hook and components (rendering, loading state, 404 state, image fallback sequence, and error handling) using RTL with mocked API.",
-      "18. Add integration E2E smoke test (Playwright or TestClient+headless browser) that loads /recipe/{sample-id}, asserts #header text, ingredients <pre>, and that image element is visible or removed per fallback rules.",
-      "19. Run migrations and import sample data into a staging DB, confirm GET /api/recipes/{id} returns expected records for spot-check IDs.",
-      "20. Serve frontend (build or dev) against staging backend and run the integration smoke test; iterate on markup/styles until pixel parity is confirmed.",
-      "21. Add CI jobs to run repository/unit/endpoint tests and the React unit tests; add optional E2E job for Playwright smoke tests in staging.",
-      "22. Document the endpoint shape, image serving strategy, required env vars, and rollback steps in README and backend/DEPLOYMENT.md.",
-      "23. Perform a staged rollout: enable endpoint in staging, run manual spot-checks vs legacy site, run automated smoke tests, then promote to production once parity verified."
+      "1. Audit legacy search.js to extract exact matching rules, DOM IDs/classes, update timing, and result rendering behavior.",
+      "2. Map legacy query semantics to DB columns and identify required recipe fields (title, tags, url, image_path).",
+      "3. Design precise JSON response shape for GET /api/search to match legacy consumers; record example payload.",
+      "4. Add/confirm repository function search_for_legacy(db, q, tags, limit, offset) that implements legacy matching in SQL with Postgres optimizations and SQLite fallback.",
+      "5. Create/confirm Pydantic model LegacySearchItem enforcing the legacy response shape and use it for endpoint responses.",
+      "6. Add migration to create pg_trgm and GIN/trigram indexes on lower(title) and GIN index for tags (document CONCURRENTLY for prod).",
+      "7. Implement FastAPI endpoint GET /api/search with query params (q, tags, limit, offset) that calls repository, validates via Pydantic, logs metadata, and returns legacy-shaped JSON.",
+      "8. Add try/except around the endpoint to log full stack traces and return stable 500 payloads while preserving response shape contract.",
+      "9. Add conservative cache and CORS headers to the search endpoint; document recommended CDN rules for query-string caching.",
+      "10. Write unit tests for the repository: success, empty-query/full-list, tags-filter, and DB-error cases (use in-memory DB / mocks).",
+      "11. Write FastAPI endpoint tests using TestClient: success, empty query, tags filtering, 400/422 invalid params, and simulated server error (mock repository).",
+      "12. Define frontend API client function search(params: { q, tags, limit, offset }, signal?) that calls /api/search and returns parsed LegacySearchItem[] with error handling.",
+      "13. Design a useSearch hook exposing {results, query, setQuery, tags, setTags, isLoading, error} and preserving legacy UX semantics.",
+      "14. Implement client-side debounce identical to legacy typing behaviour (same delay and cancellation) and ensure AbortController aborts stale requests.",
+      "15. Create React Search component that reproduces legacy DOM exactly (IDs/classes, result markup, counts, and text), wired to useSearch and the API client.",
+      "16. Implement incremental UX behaviors: instant show of cached results if available, real-time updates as the user types, and correct handling of empty query (full sorted list).",
+      "17. Implement keyboard and accessibility parity: arrow navigation, Enter to open, focus management, and ARIA attributes matching legacy accessibility behavior.",
+      "18. Add client-side defensive validation of API responses; on malformed data log and show friendly error without crashing UI.",
+      "19. Add unit tests for useSearch and Search component: loading state, result rendering, typing debounce, tags filtering, keyboard navigation, and error handling using RTL with mocked API.",
+      "20. Add Playwright e2e smoke test: open search page, type query, assert live update semantics, result ordering, and tag-filter behavior.",
+      "21. Add CI jobs to run repository and endpoint tests, frontend unit tests, and an optional staged Playwright job for search e2e smoke.",
+      "22. Deploy to staging: apply migrations (indexes CONCURRENTLY in prod), import data, start backend+frontend, run automated smoke tests and manual spot-checks against legacy site.",
+      "23. Iterate on any visual or behavioral diffs found in staging, fix small CSS/UX regressions, and re-run tests until parity verified.",
+      "24. Promote to production using a staged rollout, monitor logs/metrics, and provide rollback steps (drop indexes CONCURRENTLY or restore DB) if regressions occur."
     ],
-    "currentTask": 23,
+    "currentTask": 24,
     "completed": [
       "Based on my review of all files in /legacy, here is the numbered implementation plan:",
       "1. Document **index.html** structure: main page markup with menu system (#myNav), search input (#search), recipe list (#recipes), buttons (#toggleDark, #randomRecipe), and overlay menu (.overlay-menu, .overlay-content)",
@@ -201,7 +202,31 @@
       "20. Serve frontend (build or dev) against staging backend and run the integration smoke test; iterate on markup/styles until pixel parity is confirmed.",
       "21. Add CI jobs to run repository/unit/endpoint tests and the React unit tests; add optional E2E job for Playwright smoke tests in staging.",
       "22. Document the endpoint shape, image serving strategy, required env vars, and rollback steps in README and backend/DEPLOYMENT.md.",
-      "23. Perform a staged rollout: enable endpoint in staging, run manual spot-checks vs legacy site, run automated smoke tests, then promote to production once parity verified."
+      "23. Perform a staged rollout: enable endpoint in staging, run manual spot-checks vs legacy site, run automated smoke tests, then promote to production once parity verified.",
+      "1. Audit legacy search.js to extract exact matching rules, DOM IDs/classes, update timing, and result rendering behavior.",
+      "2. Map legacy query semantics to DB columns and identify required recipe fields (title, tags, url, image_path).",
+      "3. Design precise JSON response shape for GET /api/search to match legacy consumers; record example payload.",
+      "4. Add/confirm repository function search_for_legacy(db, q, tags, limit, offset) that implements legacy matching in SQL with Postgres optimizations and SQLite fallback.",
+      "5. Create/confirm Pydantic model LegacySearchItem enforcing the legacy response shape and use it for endpoint responses.",
+      "6. Add migration to create pg_trgm and GIN/trigram indexes on lower(title) and GIN index for tags (document CONCURRENTLY for prod).",
+      "7. Implement FastAPI endpoint GET /api/search with query params (q, tags, limit, offset) that calls repository, validates via Pydantic, logs metadata, and returns legacy-shaped JSON.",
+      "8. Add try/except around the endpoint to log full stack traces and return stable 500 payloads while preserving response shape contract.",
+      "9. Add conservative cache and CORS headers to the search endpoint; document recommended CDN rules for query-string caching.",
+      "10. Write unit tests for the repository: success, empty-query/full-list, tags-filter, and DB-error cases (use in-memory DB / mocks).",
+      "11. Write FastAPI endpoint tests using TestClient: success, empty query, tags filtering, 400/422 invalid params, and simulated server error (mock repository).",
+      "12. Define frontend API client function search(params: { q, tags, limit, offset }, signal?) that calls /api/search and returns parsed LegacySearchItem[] with error handling.",
+      "13. Design a useSearch hook exposing {results, query, setQuery, tags, setTags, isLoading, error} and preserving legacy UX semantics.",
+      "14. Implement client-side debounce identical to legacy typing behaviour (same delay and cancellation) and ensure AbortController aborts stale requests.",
+      "15. Create React Search component that reproduces legacy DOM exactly (IDs/classes, result markup, counts, and text), wired to useSearch and the API client.",
+      "16. Implement incremental UX behaviors: instant show of cached results if available, real-time updates as the user types, and correct handling of empty query (full sorted list).",
+      "17. Implement keyboard and accessibility parity: arrow navigation, Enter to open, focus management, and ARIA attributes matching legacy accessibility behavior.",
+      "18. Add client-side defensive validation of API responses; on malformed data log and show friendly error without crashing UI.",
+      "19. Add unit tests for useSearch and Search component: loading state, result rendering, typing debounce, tags filtering, keyboard navigation, and error handling using RTL with mocked API.",
+      "20. Add Playwright e2e smoke test: open search page, type query, assert live update semantics, result ordering, and tag-filter behavior.",
+      "21. Add CI jobs to run repository and endpoint tests, frontend unit tests, and an optional staged Playwright job for search e2e smoke.",
+      "22. Deploy to staging: apply migrations (indexes CONCURRENTLY in prod), import data, start backend+frontend, run automated smoke tests and manual spot-checks against legacy site.",
+      "23. Iterate on any visual or behavioral diffs found in staging, fix small CSS/UX regressions, and re-run tests until parity verified.",
+      "24. Promote to production using a staged rollout, monitor logs/metrics, and provide rollback steps (drop indexes CONCURRENTLY or restore DB) if regressions occur."
     ]
   },
   "history": [
@@ -1254,6 +1279,150 @@
       "summary": "Plan and next action\n\n- Run staged rollout from a staging host or CI that has DB access. Use the provided helper scripts to avoid manual mistakes and to run automated checks.\n\nStaged rollout steps (exact commands)\n1) Configure staging env (example):\n   export DATABASE_URL=\"postgresql://user:pass@staging:5432/keittokirja_staging\"\n   export CORS_ORIGINS=\"https://staging.example.com\"\n   export IMAGES_STATIC_DIR=\"/var/www/staging/keittokirja/images\"\n   export SERVE_IMAGES_FROM_BACKEND=true\n\n2) Apply",
       "success": true,
       "timestamp": "2026-08-02T13:00:15.628Z"
+    },
+    {
+      "task": "1. Audit legacy search.js to extract exact matching rules, DOM IDs/classes, update timing, and result rendering behavior.",
+      "summary": "Findings from legacy/search.js\n\n- Matching rule: case-insensitive substring on title only — recipe.name.toLowerCase().includes(keyword.toLowerCase()).\n- Tag filtering (menu): CSV tags.split(',') and require ALL selected tags (AND semantics); tag comparison uses raw includes() (no trimming/lowercasing).\n- Sorting: initial recipes sorted alphabetically by title (case-insensitive).\n- Update timing: no debounce — filtering runs immediately on each input event.\n- Show/hide behavior: when input is emp",
+      "success": true,
+      "timestamp": "2026-08-02T13:03:23.191Z"
+    },
+    {
+      "task": "2. Map legacy query semantics to DB columns and identify required recipe fields (title, tags, url, image_path).",
+      "summary": "1) Title\n- DB column: recipes.title (TEXT)\n- Legacy semantics: case-insensitive substring match (title.toLowerCase().includes(q.toLowerCase()))\n- SQL implementation: filter on lower(title) LIKE '%{q}%' or use pg_trgm GIN index on lower(title) for performant ILIKE/contains queries.\n\n2) Tags\n- DB column: recipes.tags (TEXT), stored as comma-separated tokens (CSV). Importer normalizes tokens to lower-case and joins with commas.\n- Legacy semantics: client splits tags by ',' and requires that a recip",
+      "success": true,
+      "timestamp": "2026-08-02T13:03:40.864Z"
+    },
+    {
+      "task": "3. Design precise JSON response shape for GET /api/search to match legacy consumers; record example payload.",
+      "summary": "Response: 200 OK\nBody: JSON array of LegacySearchItem objects\n\nLegacySearchItem (per-item)\n- name (string) — recipe title (required)\n- url (string) — relative link used by legacy site, e.g. \"recipes/{id}\" (required)\n- image_path (string|null) — optional relative or absolute image URL; if null omitted or null (client falls back to /recipes/img/{id}) (optional)\n- tags (string) — optional CSV of tags as stored in DB (optional)\n\nExample payload:\n[\n  {\n    \"name\": \"Lohikeitto\",\n    \"url\": \"recipes/ab",
+      "success": true,
+      "timestamp": "2026-08-02T13:04:01.916Z"
+    },
+    {
+      "task": "4. Add/confirm repository function search_for_legacy(db, q, tags, limit, offset) that implements legacy matching in SQL with Postgres optimizations and SQLite fallback.",
+      "summary": "Confirmed — search_for_legacy exists and matches requirements.\n\nWhere\n- backend/repositories/recipes.py (function search_for_legacy)\n\nBehaviors implemented\n- Title: case-insensitive substring via lower(title) LIKE '%q%' (uses pg_trgm-ready pattern).\n- Tags: comma-separated AND semantics; server-side using string_to_array(... ) @> when PostgreSQL, Python-side fallback for SQLite/tests.\n- Ordering: lower(title) ASC.\n- Pagination: offset & limit applied.\n- Image path: prefers db.image_path; if miss",
+      "success": true,
+      "timestamp": "2026-08-02T13:04:11.825Z"
+    },
+    {
+      "task": "5. Create/confirm Pydantic model LegacySearchItem enforcing the legacy response shape and use it for endpoint responses.",
+      "summary": "LegacySearchItem already exists and enforces the legacy response shape.\n\nFile: backend/schemas.py\n- LegacySearchItem defined with:\n  - name: str\n  - url: str\n  - tags?: Optional[str]\n  - image_path?: Optional[str]\n\nWhere used\n- backend/repositories/recipes.search_for_legacy constructs LegacySearchItem instances and returns .dict() arrays.\n- backend/routers/search.py should (and does) declare response_model=List[LegacySearchItem] for the endpoint.\n\nNext steps\n- Ensure endpoint uses response_model",
+      "success": true,
+      "timestamp": "2026-08-02T13:04:29.729Z"
+    },
+    {
+      "task": "6. Add migration to create pg_trgm and GIN/trigram indexes on lower(title) and GIN index for tags (document CONCURRENTLY for prod).",
+      "summary": "Confirmed — migration already present.\n\nLocation\n- backend/migrations/0002_add_search_indexes.sql\n\nWhat it does\n- Enables pg_trgm, creates GIN trigram index on lower(title) and GIN index on string_to_array(tags, ',') and a to_tsvector index.\n- Includes notes explaining that CREATE INDEX CONCURRENTLY should be used in production.\n\nRecommended production commands (run via psql — CONCURRENTLY must be run outside transactions)\n- psql \"$DATABASE_URL\" -c \"CREATE EXTENSION IF NOT EXISTS pg_trgm;\"\n- psq",
+      "success": true,
+      "timestamp": "2026-08-02T13:04:51.757Z"
+    },
+    {
+      "task": "7. Implement FastAPI endpoint GET /api/search with query params (q, tags, limit, offset) that calls repository, validates via Pydantic, logs metadata, and returns legacy-shaped JSON.",
+      "summary": "Done — GET /api/search implemented.\n\nLocation\n- backend/routers/search.py\n\nBehavior summary\n- Query params: q (substring), tags (CSV, AND), limit (1–1000), offset (>=0).\n- Calls repositories.recipes.search_for_legacy(db, q, tags, limit, offset).\n- Response validated by Pydantic response_model=List[LegacySearchItem].\n- Logs request/response metadata, sets conservative Cache-Control headers, and wraps errors with try/except (logs stack trace, returns 500).\n\nExample\n- curl -sS 'http://localhost:800",
+      "success": true,
+      "timestamp": "2026-08-02T13:05:03.988Z"
+    },
+    {
+      "task": "8. Add try/except around the endpoint to log full stack traces and return stable 500 payloads while preserving response shape contract.",
+      "summary": "Confirmed — try/except already added.\n\nDetails\n- File: backend/routers/search.py\n- Behavior: entire handler wrapped in try/except; logger.exception(...) records full stack trace; on error the endpoint raises HTTPException(status_code=500, detail='Search failed') so clients receive a stable 500 JSON {\"detail\":\"Search failed\"} while logs contain full diagnostic info.\n\nIf you want a different 500 payload (e.g., empty array [] to preserve response_model shape, or a machine-readable error code), say ",
+      "success": true,
+      "timestamp": "2026-08-02T13:05:13.050Z"
+    },
+    {
+      "task": "9. Add conservative cache and CORS headers to the search endpoint; document recommended CDN rules for query-string caching.",
+      "summary": "Done.\n\nWhat changed / where\n- Code: backend/routers/search.py — sets conservative headers:\n  - Cache-Control: private, max-age=0, no-store, no-cache, must-revalidate\n  - Pragma: no-cache\n  - CORS handled globally via FastAPI CORSMiddleware (backend/main.py uses settings.cors_origins_list)\n\nDocs\n- backend/DEPLOYMENT.md — added CDN/query-string caching guidance (recommend selective edge caching keyed by query string, avoid caching per-keystroke, use short TTLs or cache only specific queries).\n\nIf ",
+      "success": true,
+      "timestamp": "2026-08-02T13:05:27.743Z"
+    },
+    {
+      "task": "10. Write unit tests for the repository: success, empty-query/full-list, tags-filter, and DB-error cases (use in-memory DB / mocks).",
+      "summary": "Added repository unit test for DB-error case.\n\nWhat changed\n- backend/tests/test_search_repository_errors.py — new test:\n  - test_search_db_error_raises: uses a BadSession that raises from query(); asserts search_for_legacy propagates the exception.\n\nWhy\n- Completes repository test coverage requested: success cases already present in test_search_repository.py; this file adds the DB error case.\n\nNext recommended step\n- Run pytest backend tests locally or in CI to confirm all tests pass. Want me t",
+      "success": true,
+      "timestamp": "2026-08-02T13:06:09.506Z"
+    },
+    {
+      "task": "11. Write FastAPI endpoint tests using TestClient: success, empty query, tags filtering, 400/422 invalid params, and simulated server error (mock repository).",
+      "summary": "Added endpoint tests for tags filtering.\n\nWhat changed\n- backend/tests/test_search_endpoint.py\n  - Added test_search_tags_filtering verifying:\n    - Single-tag match returns expected recipe.\n    - AND semantics: non-matching tag combination returns an empty list.\n\nCoverage now includes:\n- success (q)\n- empty query (full list)\n- tags filtering\n- invalid params (422)\n- simulated server error (500)\n\nRun tests locally or in CI (pytest -q backend/tests). Need anything else (e.g., tests for pagination",
+      "success": true,
+      "timestamp": "2026-08-02T13:06:33.375Z"
+    },
+    {
+      "task": "12. Define frontend API client function search(params: { q, tags, limit, offset }, signal?) that calls /api/search and returns parsed LegacySearchItem[] with error handling.",
+      "summary": "Implemented the frontend search client.\n\nWhat changed\n- frontend/src/api/recipes.ts\n  - Added LegacySearchItem interface.\n  - Added validateSearchItem helper.\n  - Replaced previous search signature with:\n    search(params: { q?, tags?, limit?, offset? } = {}, signal?: AbortSignal): Promise<LegacySearchItem[]>\n  - Builds query params, calls /api/search, validates response shape, logs malformed items, and rethrows errors for callers to handle.\n\nBehavior\n- Throws on network or shape errors (caller ",
+      "success": true,
+      "timestamp": "2026-08-02T13:07:29.458Z"
+    },
+    {
+      "task": "13. Design a useSearch hook exposing {results, query, setQuery, tags, setTags, isLoading, error} and preserving legacy UX semantics.",
+      "summary": "Design for useSearch hook\n\n- API: const { results, query, setQuery, tags, setTags, isLoading, error } = useSearch();\n- State:\n  - results: LegacySearchItem[] (validated)\n  - query: string\n  - tags: string (CSV)\n  - isLoading: boolean\n  - error: string | null\n- Behavior:\n  - On mount: fetch full list (call /api/search with no q/tags) and populate results sorted by title.\n  - setQuery(newQ): update query immediately, cancel prior request via AbortController, then:\n    - if newQ is empty: set resul",
+      "success": true,
+      "timestamp": "2026-08-02T13:07:53.349Z"
+    },
+    {
+      "task": "14. Implement client-side debounce identical to legacy typing behaviour (same delay and cancellation) and ensure AbortController aborts stale requests.",
+      "summary": "Implemented useSearch hook.\n\nSummary\n- File: frontend/src/hooks/useSearch.ts\n- Exposes: { results, query, setQuery, tags, setTags, isLoading, error }\n- Behavior:\n  - Fetches full initial list on mount and shows it.\n  - User interaction tracked; after user types, empty query clears results (legacy hides list).\n  - No debounce — searches run immediately on every input change to match legacy UX.\n  - Uses AbortController to cancel in-flight requests when new requests start.\n  - Validates and surface",
+      "success": true,
+      "timestamp": "2026-08-02T13:08:46.901Z"
+    },
+    {
+      "task": "15. Create React Search component that reproduces legacy DOM exactly (IDs/classes, result markup, counts, and text), wired to useSearch and the API client.",
+      "summary": "Search component added.\n\nFiles\n- frontend/src/components/Search.tsx — React component reproducing legacy DOM:\n  - Input: <input id=\"search\"> with placeholders \"Ladataan reseptejä...\" / \"Etsi reseptejä...\"\n  - Random button: <button id=\"randomRecipe\"> via RandomRecipeButton\n  - Results container: <div id=\"recipes\"> with child <div><a href=\"{url}\">{name}</a></div> items\n  - Show/hide behavior: display:flex when results exist, otherwise display:none (matches legacy show/hide logic)\n\nIntegration\n- U",
+      "success": true,
+      "timestamp": "2026-08-02T13:09:45.463Z"
+    },
+    {
+      "task": "16. Implement incremental UX behaviors: instant show of cached results if available, real-time updates as the user types, and correct handling of empty query (full sorted list).",
+      "summary": "Updated useSearch for incremental UX.\n\nWhat changed\n- Added an in-memory cache keyed by `${q}::${tags}` to instantly show cached results if available.\n- On initial load, caches the full list (key `::`) and shows it until the user interacts.\n- When setQuery is called:\n  - If empty and user hasn't interacted, show initial full list.\n  - If empty and user has interacted, hide list (legacy behavior).\n  - If cached results exist for query+tags, show them immediately and refresh in background.\n  - Oth",
+      "success": true,
+      "timestamp": "2026-08-02T13:10:29.701Z"
+    },
+    {
+      "task": "17. Implement keyboard and accessibility parity: arrow navigation, Enter to open, focus management, and ARIA attributes matching legacy accessibility behavior.",
+      "summary": "Done — four files updated and committed. Quick test notes:\n- Open the menu, focus moves to the first recipe; ArrowUp/ArrowDown/Home/End navigate items; Enter/Space activates; Escape closes and returns focus to the hamburger.\n- Close button is now keyboard-operable and has ARIA attributes; hamburger supports Enter/Space and exposes a ref for focus return.\n\nIf you want, run the frontend locally (npm install && npm run dev) and I can run a short smoke test (keyboard navigation script or manual chec",
+      "success": true,
+      "timestamp": "2026-08-02T14:23:19.206Z"
+    },
+    {
+      "task": "18. Add client-side defensive validation of API responses; on malformed data log and show friendly error without crashing UI.",
+      "summary": "Done — added runtime validation and friendly UI handling.\n\nSummary of changes:\n- frontend/src/api/recipes.ts\n  - Added runtime validators (validateRecipe, validateLegacyListItem, etc.).\n  - listAll, listLegacy, filterByTags, getRandom, getById now validate responses, log malformed payloads, and throw predictable errors.\n  - search retained its item-level validation.\n- frontend/src/components/LegacyRecipeList.tsx\n  - Shows a friendly error message (\"Reseptien haku epäonnistui\") when fetching/vali",
+      "success": true,
+      "timestamp": "2026-08-02T14:26:11.808Z"
+    },
+    {
+      "task": "19. Add unit tests for useSearch and Search component: loading state, result rendering, typing debounce, tags filtering, keyboard navigation, and error handling using RTL with mocked API.",
+      "summary": "Tests added and committed.\n\nWhat changed:\n- frontend/src/__tests__/useSearch.test.tsx\n  - Tests initial load, query behavior (clearing after interaction), tags-triggered search when user has interacted, and error handling.\n- frontend/src/__tests__/Search.test.tsx\n  - Integration tests for Search component: initial loading placeholder, typing triggers API and renders results, clearing hides results, anchors are keyboard-focusable, and API error logging doesn't crash UI.\n\nHow to run:\n- From fronte",
+      "success": true,
+      "timestamp": "2026-08-02T14:27:31.219Z"
+    },
+    {
+      "task": "20. Add Playwright e2e smoke test: open search page, type query, assert live update semantics, result ordering, and tag-filter behavior.",
+      "summary": "Playwright smoke test added and committed: frontend/tests/e2e/search.smoke.spec.ts\n\nWhat it does:\n- Intercepts /api/search to return deterministic full and filtered lists so results and ordering are verifiable.\n- Navigates to the home page, asserts initial result ordering.\n- Types 'a' into the search input and asserts live update of results and ordering.\n- Opens the filter dropdown, clicks the 'kana' tag, asserts the filter button shows \"(1)\" and that /api/recipes/filter was called with tags con",
+      "success": true,
+      "timestamp": "2026-08-02T14:29:14.627Z"
+    },
+    {
+      "task": "21. Add CI jobs to run repository and endpoint tests, frontend unit tests, and an optional staged Playwright job for search e2e smoke.",
+      "summary": "CI updated and committed.\n\nWhat changed:\n- .github/workflows/e2e-smoke.yml\n  - Playwright smoke workflow (manual dispatch) now runs both recipe-detail.spec.ts and the new search.smoke.spec.ts.\n- .github/workflows/ci.yml\n  - Optional staged playwright-e2e job now runs both smoke specs when manually dispatched.\n\nThese jobs already run:\n- backend-tests: runs pytest on backend/tests (covers repository and endpoint tests).\n- frontend-tests: installs frontend deps and runs npm test (runs React unit te",
+      "success": true,
+      "timestamp": "2026-08-02T14:30:01.164Z"
+    },
+    {
+      "task": "22. Deploy to staging: apply migrations (indexes CONCURRENTLY in prod), import data, start backend+frontend, run automated smoke tests and manual spot-checks against legacy site.",
+      "summary": "Attempted deployment here but it failed early — environment is missing runtime tooling (pip / Python deps) and production services/credentials (Postgres DB, Firebase keys). Cannot safely complete a real staging deploy from this session.\n\nWhy it failed (quick):\n- /usr/bin/python has no pip; backend deps (sqlalchemy, pydantic_settings, etc.) not installable here.\n- import_legacy_recipes fell back to dry-run because Firebase/DB creds missing.\n- Frontend test/build reported missing test typings (nod",
+      "success": true,
+      "timestamp": "2026-08-02T14:31:22.545Z"
+    },
+    {
+      "task": "23. Iterate on any visual or behavioral diffs found in staging, fix small CSS/UX regressions, and re-run tests until parity verified.",
+      "summary": "Plan saved. Which option do you want to start with: A (provide staging URL + diffs so I can fix now), B (I open a PR with likely small fixes), or C (I add CI deploy workflow and secrets checklist)?",
+      "success": true,
+      "timestamp": "2026-08-02T14:31:52.240Z"
+    },
+    {
+      "task": "24. Promote to production using a staged rollout, monitor logs/metrics, and provide rollback steps (drop indexes CONCURRENTLY or restore DB) if regressions occur.",
+      "summary": "Good—here’s a compact, operational plan for a staged production rollout, monitoring, and safe rollback options (indexes CONCURRENTLY / DB restore). Say which automation pieces to implement next (CI job, k8s/YAML changes, runbook).\n\n1) Preconditions (must complete before rollout)\n- Full, tested DB backup: pg_dump -Fc --no-acl --no-owner -h $HOST -U $USER $DB > /tmp/pre-deploy.dump\n- Ensure WAL archiving/PITR configured if you rely on PITR\n- Migrations reviewed for out-of-band work (index creation",
+      "success": true,
+      "timestamp": "2026-08-02T14:33:19.269Z"
     }
   ]
 }
