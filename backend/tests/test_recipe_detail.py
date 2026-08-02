@@ -95,40 +95,6 @@ def test_fetch_by_id_db_error(monkeypatch):
         fetch_by_id_for_legacy(bad, 'd1')
 
 
-# Tests for the FastAPI endpoint
-@pytest.fixture()
-def client_with_db():
-    engine = create_engine('sqlite:///:memory:')
-    Base.metadata.create_all(bind=engine)
-    SessionLocal = sessionmaker(bind=engine)
-
-    # insert a sample recipe
-    session = SessionLocal()
-    r = RecipeModel(
-        id='api1',
-        title='API Detail',
-        tags='test',
-        ingredients='ing',
-        instructions='do',
-        info='info',
-        image_path='/recipes/img/api1.png'
-    )
-    session.add(r)
-    session.commit()
-    session.close()
-
-    def override_get_db():
-        db = SessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app.dependency_overrides[get_db] = override_get_db
-    client = TestClient(app)
-    yield client
-    app.dependency_overrides.clear()
-    engine.dispose()
 
 
 def test_get_recipe_success(client_with_db):
@@ -153,6 +119,7 @@ def test_get_recipe_server_error(monkeypatch, client_with_db):
     def raise_exc(db, recipe_id):
         raise RuntimeError('boom')
 
-    monkeypatch.setattr(repo, 'fetch_by_id_for_legacy', raise_exc)
+    # Patch the function where the router bound it at import time
+    monkeypatch.setattr('routers.recipes.fetch_by_id_for_legacy', raise_exc)
     resp = client_with_db.get('/api/recipes/api1')
     assert resp.status_code == 500
