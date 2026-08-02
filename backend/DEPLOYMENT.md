@@ -129,3 +129,42 @@ Operational checklist
 - Configure CORS_ORIGINS to the frontend origin(s).
 - Run smoke tests (backend/tests and frontend/tests/e2e) in staging before production rollout.
 
+Consolidated reference (endpoint shapes, image strategy, env vars, rollback)
+
+1) Endpoint shapes
+- GET /api/recipes/
+  - 200: JSON array of legacy list items: { name: string, url: string, image_path?: string }
+- GET /api/recipes/{id}
+  - 200: LegacyRecipeDetail: { title: string, ingredients: string, instructions: string, info?: string, image_path?: string }
+  - 404: recipe not found
+  - 500: unexpected server error (stack trace logged)
+- GET /api/search?q={query}&tags={csv}&limit={n}&offset={o}
+  - 200: array of legacy-compatible search items
+
+2) Image serving strategy (exact behavior)
+- When importing, prefer storing absolute or relative image_path in DB.
+- If DB.image_path is NULL the API returns `/recipes/img/{id}` (no extension). The frontend attempts in order: {image_path}, /recipes/img/{id}.png, .jpg, .jpeg, then /fallback.png. If all fail the frontend hides the <img id="image"> element.
+- Deployment options:
+  - Serve from backend: set SERVE_IMAGES_FROM_BACKEND=true, ensure IMAGES_STATIC_DIR contains <id>.<ext> and fallback.png. Backend mounts StaticFiles at IMAGES_URL_PREFIX.
+  - Serve from CDN: import/patch DB rows to use CDN URLs in image_path.
+
+3) Required environment variables (minimum)
+- DATABASE_URL: required (SQLAlchemy URL)
+- CORS_ORIGINS: recommended (comma-separated frontend origins)
+- SERVE_IMAGES_FROM_BACKEND: true|false
+- IMAGES_STATIC_DIR: path containing served images (if SERVE_IMAGES_FROM_BACKEND=true)
+- IMAGES_URL_PREFIX: URL prefix used for images (default /recipes/img)
+- API_HOST/API_PORT/API_DEBUG: uvicorn options
+- Optional: Firebase credentials if using the importer against Firebase
+
+4) Rollback steps (safe approach)
+- Backup the DB before making changes.
+- For dropping search indexes in production use CONCURRENTLY to avoid locks:
+  psql "$DATABASE_URL" -c "DROP INDEX CONCURRENTLY IF EXISTS idx_recipes_title_trgm;"
+  psql "$DATABASE_URL" -c "DROP INDEX CONCURRENTLY IF EXISTS idx_recipes_tags_gin;"
+  psql "$DATABASE_URL" -c "DROP INDEX CONCURRENTLY IF EXISTS idx_recipes_title_tsv;"
+  psql "$DATABASE_URL" -c "DROP EXTENSION IF EXISTS pg_trgm;"
+- If using the provided SQL rollback file, run it during a maintenance window and be prepared for non-CONCURRENT drops on large datasets.
+- After rollback: VACUUM ANALYZE recipes; monitor query plans and app performance.
+
+For more details see backend/README_IMPORT.md and backend/SEARCH_INDEXES.md
