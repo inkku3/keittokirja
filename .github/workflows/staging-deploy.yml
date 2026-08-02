@@ -1,0 +1,110 @@
+name: Deploy to Staging (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  staging-deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Publish frontend to staging host (placeholder)
+        run: |
+          echo "TODO: upload frontend build to staging host or CDN"
+        # Requires: STAGING_SSH, STAGING_HOST, or cloud provider credentials
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install backend deps
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Apply DB migrations (staging)
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          # Use CONCURRENTLY safe commands in production; this job runs on staging environment
+          # Adjust to your migration tool (alembic, prisma, django, etc.)
+          if [ -f alembic.ini ]; then
+            alembic upgrade head
+          else
+            echo "No alembic.ini found; add migration step for your stack"
+          fi
+
+      - name: Import legacy recipes (staging)
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          IMPORT_DRY_RUN: 0
+          LEGACY_DATA_BUCKET: ${{ secrets.LEGACY_DATA_BUCKET }}
+        run: |
+          # Placeholder for import script; update path to actual import script
+          if [ -x scripts/import_legacy_recipes.sh ]; then
+            ./scripts/import_legacy_recipes.sh
+          else
+            echo "No import script found — add one or run import manually"
+          fi
+
+      - name: Start backend (preview) in background
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          # Start uvicorn in background for smoke tests; the runner will exit after job completes
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > backend.log 2>&1 &
+          sleep 2
+
+      - name: Start frontend preview (background)
+        working-directory: frontend
+        run: |
+          nohup npm run preview -- --port 5173 > frontend-preview.log 2>&1 &
+          sleep 2
+
+      - name: Run Playwright smoke tests (optional/staged)
+        env:
+          E2E_BASE_URL: http://127.0.0.1:5173
+        run: |
+          echo "Running Playwright smoke tests"
+          # Install Playwright if not present and run the smoke specs
+          npm install -g playwright@1.40.0 || true
+          npx playwright install --with-deps || true
+          npx playwright test frontend/tests/e2e --reporter=list || true
+
+      - name: Collect logs and artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-logs
+          path: |
+            frontend-preview.log
+            backend.log
+
+      - name: Notify reviewers (comment/PR) placeholder
+        run: |
+          echo "Deployment finished. Please review staging at <staging_url> and run visual checks against legacy site."
+
+    # NOTE: This workflow is a draft. It requires secrets and staging host configuration.
+    # Secrets required: STAGING_DATABASE_URL, LEGACY_DATA_BUCKET, and any host credentials (SSH keys or cloud provider tokens).
+    # The migration/import commands and service start commands are placeholders — adapt to your infra.
