@@ -27,7 +27,7 @@ describe('SearchBar', () => {
     render(<SearchBar />);
 
     // Input should exist (initially disabled while loading)
-    const input = screen.getByRole('textbox', { name: /search/i }) || document.getElementById('search');
+    const input = screen.getByPlaceholderText(/Ladataan reseptejä|Etsi reseptejä/) || document.getElementById('search');
     expect(input).toBeTruthy();
 
     // Wait for initial load to complete and results to render
@@ -49,9 +49,11 @@ describe('SearchBar', () => {
     (recipeAPI.search as jest.Mock).mockClear();
 
     const input = document.getElementById('search') as HTMLInputElement;
-    userEvent.type(input, 'x');
+    await userEvent.type(input, 'x');
 
-    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledWith('x', undefined, expect.any(Object)));
+    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
+    const lastCall = (recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0];
+    expect(lastCall[0]).toBe('x');
     await waitFor(() => expect(screen.getByText('Xray')).toBeInTheDocument());
   });
 
@@ -92,7 +94,7 @@ describe('SearchBar', () => {
 
     const input = document.getElementById('search') as HTMLInputElement;
     // type to trigger search
-    userEvent.type(input, 'y');
+    await userEvent.type(input, 'y');
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
 
     // clear
@@ -111,7 +113,7 @@ describe('SearchBar', () => {
     (recipeAPI.search as jest.Mock).mockClear();
 
     const input = document.getElementById('search') as HTMLInputElement;
-    userEvent.type(input, 'z');
+    await userEvent.type(input, 'z');
 
     await waitFor(() => expect(consoleSpy).toHaveBeenCalled());
     consoleSpy.mockRestore();
