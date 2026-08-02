@@ -53,7 +53,6 @@ describe('Dark mode hook and button', () => {
   test('toggle updates body class and persists to localStorage', () => {
     // start false
     window.localStorage.setItem('isDarkMode', 'false');
-    const setItemSpy = jest.spyOn(window.localStorage, 'setItem');
 
     render(<TestHookUser />);
 
@@ -67,13 +66,13 @@ describe('Dark mode hook and button', () => {
     // after toggle, state should be true
     expect(state).toHaveTextContent('true');
     expect(document.body.classList.contains('dark-mode')).toBe(true);
-    expect(setItemSpy).toHaveBeenCalledWith('isDarkMode', 'true');
+    expect(window.localStorage.getItem('isDarkMode')).toBe('true');
 
     // toggle back
     fireEvent.click(toggleBtn);
     expect(state).toHaveTextContent('false');
     expect(document.body.classList.contains('dark-mode')).toBe(false);
-    expect(setItemSpy).toHaveBeenCalledWith('isDarkMode', 'false');
+    expect(window.localStorage.getItem('isDarkMode')).toBe('false');
   });
 
   test('DarkModeButton shows correct legacy labels and toggles on click', () => {

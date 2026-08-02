@@ -104,11 +104,23 @@ export const recipeAPI = {
   },
 
   // Search recipes by title (legacy-compatible endpoint at /api/search)
-  // Accepts params { q?, tags?, limit?, offset? } and optional AbortSignal
-  search: async (
-    params: { q?: string; tags?: string; limit?: number; offset?: number } = {},
-    signal?: AbortSignal
-  ): Promise<LegacySearchItem[]> => {
+  // Supports two signatures for backward compatibility:
+  //  - search({ q?, tags?, limit?, offset? }, signal?)
+  //  - search(query?: string, tags?: string, signal?: AbortSignal)
+  search: async (...args: any[]): Promise<LegacySearchItem[]> => {
+    let params: { q?: string; tags?: string; limit?: number; offset?: number } = {};
+    let signal: AbortSignal | undefined;
+
+    if (typeof args[0] === 'string' || args[0] === undefined) {
+      // old signature: (query?, tags?, signal?)
+      params.q = args[0];
+      params.tags = args[1];
+      signal = args[2];
+    } else if (typeof args[0] === 'object') {
+      params = args[0] || {};
+      signal = args[1];
+    }
+
     try {
       const p: Record<string, any> = {};
       if (params.q) p.q = params.q;
