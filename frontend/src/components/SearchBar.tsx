@@ -28,6 +28,25 @@ export function SearchBar({
   const timerRef = useRef<number | null>(null);
 
   // Load initial full list (legacy displays full list on load)
+  const coerceToRecipes = (data: any[]): Recipe[] => {
+    return (data || []).map((item) => {
+      // If already full Recipe, return as-is (assert minimal fields)
+      if (item && typeof item.id === 'string' && typeof item.title === 'string') {
+        return item as Recipe;
+      }
+      // LegacySearchItem shape: { name, url }
+      const idMatch = typeof item?.url === 'string' ? item.url.replace(/^recipes\//, '') : undefined;
+      return {
+        id: idMatch ?? String(item?.id ?? ''),
+        title: item?.name ?? item?.title ?? '',
+        ingredients: item?.ingredients ?? '',
+        instructions: item?.instructions ?? '',
+        created_at: item?.created_at ?? '',
+        updated_at: item?.updated_at ?? '',
+      } as Recipe;
+    });
+  };
+
   useEffect(() => {
     let mounted = true;
     const ac = new AbortController();
@@ -39,9 +58,10 @@ export function SearchBar({
         setInitialLoading(true);
         const data = await recipeAPI.search(undefined, tags, ac.signal);
         if (!mounted) return;
-        setResults(data);
+        const coerced = coerceToRecipes(data);
+        setResults(coerced);
         setShowResults(true);
-        onSearchResults?.(data);
+        onSearchResults?.(coerced);
       } catch (err: any) {
         if (err?.name === 'CanceledError' || err?.message === 'canceled') {
           // aborted - ignore
@@ -85,10 +105,11 @@ export function SearchBar({
     setIsLoading(true);
     try {
       const data = await recipeAPI.search(query, tags, ac.signal);
-      setResults(data);
+      const coerced = coerceToRecipes(data);
+      setResults(coerced);
       // show only when there are results — legacy hides when filtered.length === 0
-      setShowResults(Array.isArray(data) && data.length > 0);
-      onSearchResults?.(data);
+      setShowResults(Array.isArray(coerced) && coerced.length > 0);
+      onSearchResults?.(coerced);
     } catch (err: any) {
       if (err?.name === 'CanceledError' || err?.message === 'canceled') {
         // request was aborted; no action
