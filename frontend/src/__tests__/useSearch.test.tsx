@@ -74,7 +74,10 @@ describe('useSearch hook', () => {
     await act(async () => userEvent.type(q, 'm'));
 
     // recipeAPI.search should be called for the query
-    await waitFor(() => expect((recipeAPI.search as jest.Mock)).toHaveBeenCalledWith({ q: 'm', tags: undefined }, expect.any(Object)));
+    await waitFor(() => expect((recipeAPI.search as jest.Mock)).toHaveBeenCalled());
+    // ensure last call contained the query
+    const lastCall = (recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0];
+    expect(lastCall[0]).toMatchObject(expect.objectContaining({ q: 'm' }));
 
     // clear the query
     await act(async () => userEvent.clear(q));

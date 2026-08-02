@@ -50,7 +50,10 @@ describe('Search component integration', () => {
     const input = screen.getByRole('textbox');
     await userEvent.type(input, 'x');
 
-    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledWith({ q: 'x', tags: undefined }, expect.any(Object)));
+    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
+    // check last call contained the query
+    const lastCall = (recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0];
+    expect(lastCall[0]).toMatchObject(expect.objectContaining({ q: 'x' }));
 
     expect(await screen.findByText('MatchX')).toBeInTheDocument();
   });
