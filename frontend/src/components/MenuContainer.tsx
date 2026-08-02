@@ -9,6 +9,7 @@ interface MenuContainerProps {
 
 export function MenuContainer({ onRecipeSelect }: MenuContainerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const hamburgerRef = (React as any).useRef<HTMLDivElement | null>(null);
 
   const handleMenuToggle = useCallback((isOpen: boolean) => {
     setIsMenuOpen(isOpen);
@@ -28,11 +29,12 @@ export function MenuContainer({ onRecipeSelect }: MenuContainerProps) {
 
   return (
     <>
-      <HamburgerMenu isOpen={isMenuOpen} onToggle={handleMenuToggle} />
+      <HamburgerMenu isOpen={isMenuOpen} onToggle={handleMenuToggle} buttonRef={hamburgerRef} />
       <Navigation
         isOpen={isMenuOpen}
         onClose={handleClose}
         onRecipeSelect={handleRecipeSelect}
+        returnFocusRef={hamburgerRef}
       />
     </>
   );
