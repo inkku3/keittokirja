@@ -28,8 +28,8 @@ function TestHarness() {
         onChange={(e) => setTags(e.target.value)}
       />
       <ul data-testid="results">
-        {results.map((r) => (
-          <li key={r.url}>{r.name}</li>
+        {(results || []).map((r) => (
+          <li key={(r as any).url ?? (r as any).id}>{(r as any).name ?? (r as any).title}</li>
         ))}
       </ul>
     </div>
