@@ -1,9 +1,8 @@
-import React from 'react';
 import { useSearch } from '../hooks/useSearch';
 import { RandomRecipeButton } from './RandomRecipeButton';
 
 export function Search() {
-  const { results, query, setQuery, tags, setTags, isLoading } = useSearch();
+  const { results, query, setQuery, isLoading } = useSearch();
 
   const showList = Array.isArray(results) && results.length > 0;
 

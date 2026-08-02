@@ -1,6 +1,4 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
 // Mock the API client
 jest.mock('../api/recipes', () => ({
@@ -49,12 +47,12 @@ describe('SearchBar', () => {
     (recipeAPI.search as jest.Mock).mockClear();
 
     const input = document.getElementById('search') as HTMLInputElement;
-    await userEvent.type(input, 'x');
+    await act(async () => { fireEvent.change(input, { target: { value: 'x' } }); });
 
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
     const lastCall = (recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0];
     expect(lastCall[0]).toBe('x');
-    await waitFor(() => expect(screen.getByText('Xray')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText((_, el) => el?.textContent === 'Xray')[0]).toBeInTheDocument());
   });
 
   test('debounce delays API call when debounceMs provided', async () => {
@@ -74,11 +72,11 @@ describe('SearchBar', () => {
     expect(recipeAPI.search).not.toHaveBeenCalled();
 
     // advance less than debounce
-    jest.advanceTimersByTime(200);
+    await act(async () => { await jest.advanceTimersByTimeAsync(200); });
     expect(recipeAPI.search).not.toHaveBeenCalled();
 
     // advance past debounce
-    jest.advanceTimersByTime(200);
+    await act(async () => { await jest.advanceTimersByTimeAsync(200); });
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledWith('ab', undefined, expect.any(Object)));
   });
 
@@ -94,7 +92,7 @@ describe('SearchBar', () => {
 
     const input = document.getElementById('search') as HTMLInputElement;
     // type to trigger search
-    await userEvent.type(input, 'y');
+    await act(async () => { fireEvent.change(input, { target: { value: 'y' } }); });
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
 
     // clear
@@ -113,7 +111,7 @@ describe('SearchBar', () => {
     (recipeAPI.search as jest.Mock).mockClear();
 
     const input = document.getElementById('search') as HTMLInputElement;
-    await userEvent.type(input, 'z');
+    await act(async () => { fireEvent.change(input, { target: { value: 'z' } }); });
 
     await waitFor(() => expect(consoleSpy).toHaveBeenCalled());
     consoleSpy.mockRestore();

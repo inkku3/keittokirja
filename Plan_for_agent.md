@@ -59,13 +59,20 @@ When real credentials are supplied later, only the DATABASE_URL value should nee
 ```
 
 7. Dark mode
-
+~~
 ```
 /plan Migrate legacy/darkmode.js into a React-based dark mode toggle in /frontend. Preserve the exact same visual dark/light theme colors from styles.css, the same toggle control placement and behavior, and the same persistence mechanism (check whether darkmode.js uses localStorage, a cookie, or prefers-color-scheme, and replicate that).
 ```
 
-8. PWA/asset check
+7.5 Bug fixes
+~~
 
+```
+Read the file ../CI_FAILURE_REPORT.md at the project root — it documents real, verified build and test failures found by actually running the commands locally. Work through it in the order specified. Follow the ground rules at the bottom exactly: run the actual commands and paste real output before claiming anything is fixed, and do not commit or merge until all three (build, frontend tests, backend tests) pass together.
+```
+
+8. PWA/asset check
+~~
 ```
 /plan Verify site.webmanifest, favicons, and fallback.png work identically in the new React app (installability, icons, offline fallback behavior if any). Fix any discrepancies found against the legacy version.
 ```

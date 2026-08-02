@@ -61,7 +61,6 @@ export function LegacyRecipeList() {
     sources.push(`/recipes/img/${idFromUrl}.png`);
     sources.push(`/recipes/img/${idFromUrl}.jpg`);
     sources.push(`/recipes/img/${idFromUrl}.jpeg`);
-    sources.push('/fallback.png');
     return sources;
   };
 

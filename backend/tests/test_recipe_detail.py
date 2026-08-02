@@ -13,16 +13,47 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture()
-def in_memory_session():
-    engine = create_engine('sqlite:///:memory:')
-    Base.metadata.create_all(bind=engine)
-    Session = sessionmaker(bind=engine)
+def in_memory_session(SessionLocal):
+    # Use SessionLocal fixture from conftest
+    Session = SessionLocal
     session = Session()
     try:
         yield session
     finally:
         session.close()
-        engine.dispose()
+
+
+# Tests for the FastAPI endpoint
+@pytest.fixture()
+def client_with_db(SessionLocal):
+    # Use SessionLocal fixture; create tables are handled by engine fixture
+    SessionLocal = SessionLocal
+    # insert a sample recipe
+    session = SessionLocal()
+    r = RecipeModel(
+        id='api1',
+        title='API Detail',
+        tags='test',
+        ingredients='ing',
+        instructions='do',
+        info='info',
+        image_path='/recipes/img/api1.png'
+    )
+    session.add(r)
+    session.commit()
+    session.close()
+
+    def override_get_db():
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()
 
 
 def test_fetch_by_id_success(in_memory_session):

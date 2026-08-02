@@ -17,6 +17,23 @@ export function SearchInput({
   const [results, setResults] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const coerceToRecipes = (data: any[]): Recipe[] => {
+    return (data || []).map((item) => {
+      if (item && typeof item.id === 'string' && typeof item.title === 'string') {
+        return item as Recipe;
+      }
+      const idMatch = typeof item?.url === 'string' ? item.url.replace(/^recipes\//, '') : undefined;
+      return {
+        id: idMatch ?? String(item?.id ?? ''),
+        title: item?.name ?? item?.title ?? '',
+        ingredients: item?.ingredients ?? '',
+        instructions: item?.instructions ?? '',
+        created_at: item?.created_at ?? '',
+        updated_at: item?.updated_at ?? '',
+      } as Recipe;
+    });
+  };
+
   const handleSearch = useCallback(
     async (query: string) => {
       setSearchTerm(query);
@@ -30,8 +47,9 @@ export function SearchInput({
       setIsLoading(true);
       try {
         const searchResults = await recipeAPI.search(query);
-        setResults(searchResults);
-        onResultsChange?.(searchResults, true);
+        const coerced = coerceToRecipes(searchResults);
+        setResults(coerced);
+        onResultsChange?.(coerced, true);
       } catch (error) {
         console.error('Search failed:', error);
         setResults([]);

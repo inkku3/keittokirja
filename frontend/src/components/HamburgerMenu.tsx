@@ -4,7 +4,7 @@ import styles from './components.module.css';
 interface HamburgerMenuProps {
   isOpen?: boolean;
   onToggle?: (isOpen: boolean) => void;
-  buttonRef?: React.RefObject<HTMLDivElement>;
+  buttonRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export function HamburgerMenu({ isOpen = false, onToggle, buttonRef }: HamburgerMenuProps) {

@@ -14,7 +14,7 @@ export function ResponsiveRecipeImage({
   recipeId,
   title,
   imagePath,
-  fallbackImage = '/fallback.png',
+  fallbackImage,
   className = 'foodpic',
   showPlaceholder = true,
   placeholderText = 'No image available',
@@ -22,15 +22,11 @@ export function ResponsiveRecipeImage({
   const { currentImageSrc, isLoading, hasError, handleImageLoad, handleImageError } =
     useImageLoader({
       sources: [imagePath, `recipes/img/${recipeId}.png`, `recipes/img/${recipeId}.jpg`, `recipes/img/${recipeId}.jpeg`].filter((s): s is string => !!s),
-      fallbackImage,
     });
 
+  // Match legacy: hide the image element if all sources fail
   if (hasError) {
-    return showPlaceholder ? (
-      <div className="image-container placeholder">
-        <div className="image-placeholder">{placeholderText}</div>
-      </div>
-    ) : null;
+    return null;
   }
 
   return (
@@ -39,7 +35,7 @@ export function ResponsiveRecipeImage({
       <img
         className={className}
         id="image"
-        src={currentImageSrc ?? fallbackImage}
+        src={currentImageSrc ?? undefined}
         alt={title}
         onLoad={handleImageLoad}
         onError={handleImageError}

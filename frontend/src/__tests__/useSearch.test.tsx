@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 jest.mock('../api/recipes', () => ({
@@ -71,7 +70,7 @@ describe('useSearch hook', () => {
 
     // type a query
     const q = screen.getByTestId('query');
-    await act(async () => userEvent.type(q, 'm'));
+    await act(async () => { fireEvent.change(q, { target: { value: 'm' } }); });
 
     // recipeAPI.search should be called for the query
     await waitFor(() => expect((recipeAPI.search as jest.Mock)).toHaveBeenCalled());
@@ -80,7 +79,7 @@ describe('useSearch hook', () => {
     expect(lastCall[0]).toMatchObject(expect.objectContaining({ q: 'm' }));
 
     // clear the query
-    await act(async () => userEvent.clear(q));
+    await act(async () => { fireEvent.change(q, { target: { value: '' } }); });
 
     // after clearing (user has interacted), results should be hidden (empty list)
     expect(screen.queryByText('Match')).toBeNull();
@@ -98,7 +97,7 @@ describe('useSearch hook', () => {
 
     const q = screen.getByTestId('query');
     // simulate user typing so hasInteracted becomes true
-    await act(async () => userEvent.type(q, 'a'));
+    await act(async () => { fireEvent.change(q, { target: { value: 'a' } }); });
 
     const tags = screen.getByTestId('tags');
     await act(async () => userEvent.type(tags, 'chicken'));

@@ -19,6 +19,6 @@ export class Executor {
         return run("npm", ["run", "build"], projectPath("frontend"));
     }
     async buildBackend() {
-        return run("python", ["-m", "pytest"], projectPath("backend"));
+        return run(".venv/bin/python", ["-m", "pytest"], projectPath("backend"));
     }
 }

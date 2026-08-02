@@ -11,18 +11,16 @@ export function RecipeImage({
   recipeId,
   title,
   imagePath,
-  fallbackImage = '/fallback.png',
 }: RecipeImageProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hasError, setHasError] = useState(false);
 
-  // Try multiple image formats, then fallback image
+  // Try multiple image formats; hide image if all fail
   const imageSources = [
     imagePath,
     `recipes/img/${recipeId}.png`,
     `recipes/img/${recipeId}.jpg`,
     `recipes/img/${recipeId}.jpeg`,
-    fallbackImage,
   ].filter(Boolean);
 
   const handleImageError = () => {

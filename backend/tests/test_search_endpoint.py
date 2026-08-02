@@ -14,11 +14,8 @@ from repositories import recipes as repo
 
 
 @pytest.fixture()
-def client_with_db():
-    engine = create_engine('sqlite:///:memory:')
-    Base.metadata.create_all(bind=engine)
-    SessionLocal = sessionmaker(bind=engine)
-
+def client_with_db(SessionLocal):
+    # Use SessionLocal fixture; tables are created by engine fixture
     # seed data
     session = SessionLocal()
     items = [
@@ -43,7 +40,6 @@ def client_with_db():
     yield client
 
     app.dependency_overrides.clear()
-    engine.dispose()
 
 
 def test_search_success(client_with_db):

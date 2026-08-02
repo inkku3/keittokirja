@@ -86,4 +86,4 @@ def test_empty_query_returns_all_sorted(in_memory_session):
     results = search_for_legacy(s, q=None)
     names = [r['name'] for r in results]
     # Expect all seeded names, sorted by lower(name)
-    assert set(names) >= {'Lohikeitto', 'LohiKeitto Special', 'K\x00e4ristys', 'Salaatti'}
+    assert set(names) >= {'Lohikeitto', 'LohiKeitto Special', 'Käristys', 'Salaatti'}

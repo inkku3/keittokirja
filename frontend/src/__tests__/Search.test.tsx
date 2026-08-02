@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 jest.mock('../api/recipes', () => ({
@@ -48,7 +47,7 @@ describe('Search component integration', () => {
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
 
     const input = screen.getByRole('textbox');
-    await userEvent.type(input, 'x');
+    await act(async () => userEvent.type(input, 'x'));
 
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
     // check last call contained the query
@@ -68,7 +67,7 @@ describe('Search component integration', () => {
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
 
     const input = screen.getByRole('textbox');
-    await userEvent.type(input, 'y');
+    await act(async () => userEvent.type(input, 'y'));
     await waitFor(() => expect(screen.getByText('Y1')).toBeInTheDocument());
 
     // clear input
@@ -91,7 +90,7 @@ describe('Search component integration', () => {
     expect(document.activeElement).toBe(input);
 
     // tab to first result
-    await userEvent.tab(); // should move to RandomRecipeButton (maybe), call again until we hit anchor
+    await act(async () => userEvent.tab()); // should move to RandomRecipeButton (maybe), call again until we hit anchor
     // attempt to find anchor and ensure it's focusable
     const anchor = await screen.findByRole('link', { name: 'TabA' });
     // move focus to anchor programmatically to simulate keyboard navigation

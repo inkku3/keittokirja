@@ -12,12 +12,8 @@ from models import Recipe as RecipeModel
 
 
 @pytest.fixture()
-def test_client():
-    # Setup in-memory SQLite and override get_db dependency
-    engine = create_engine('sqlite:///:memory:')
-    Base.metadata.create_all(bind=engine)
-    SessionLocal = sessionmaker(bind=engine)
-
+def test_client(SessionLocal):
+    # Setup in-memory SQLite via SessionLocal fixture and override get_db dependency
     # Insert sample data
     session = SessionLocal()
     r = RecipeModel(
@@ -47,7 +43,6 @@ def test_client():
 
     # Teardown
     app.dependency_overrides.clear()
-    engine.dispose()
 
 
 def test_api_recipes_list_returns_legacy_shape(test_client):

@@ -6,7 +6,7 @@ interface NavigationProps {
   isOpen?: boolean;
   onClose?: () => void;
   onRecipeSelect?: (recipe: Recipe) => void;
-  returnFocusRef?: React.RefObject<HTMLElement>;
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 export function Navigation({

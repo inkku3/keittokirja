@@ -34,10 +34,11 @@ export class Executor {
 
     async buildBackend(): Promise<BuildResult> {
         return run(
-            "python",
+            ".venv/bin/python",
             ["-m", "pytest"],
             projectPath("backend")
         );
     }
+
 
 }
