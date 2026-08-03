@@ -1,5 +1,4 @@
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
 jest.mock('../api/recipes', () => ({
   recipeAPI: {
@@ -14,23 +13,23 @@ function TestHarness() {
   const { results, query, setQuery, tags, setTags, isLoading, error } = useSearch();
   return (
     <div>
-      <div data-testid="loading">{isLoading ? 'loading' : 'idle'}</div>
-      <div data-testid="error">{error ?? ''}</div>
-      <input
-        data-testid="query"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <input
-        data-testid="tags"
-        value={tags}
-        onChange={(e) => setTags(e.target.value)}
-      />
-      <ul data-testid="results">
-        {(results || []).map((r) => (
-          <li key={(r as any).url ?? (r as any).id}>{(r as any).name ?? (r as any).title}</li>
-        ))}
-      </ul>
+    <div data-testid="loading">{isLoading ? 'loading' : 'idle'}</div>
+    <div data-testid="error">{error ?? ''}</div>
+    <input
+    data-testid="query"
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+    />
+    <input
+    data-testid="tags"
+    value={tags}
+    onChange={(e) => setTags(e.target.value)}
+    />
+    <ul data-testid="results">
+    {(results || []).map((r) => (
+      <li key={(r as any).url ?? (r as any).id}>{(r as any).name ?? (r as any).title}</li>
+    ))}
+    </ul>
     </div>
   );
 }
@@ -66,47 +65,69 @@ describe('useSearch hook', () => {
 
     render(<TestHarness />);
 
+    // Wait for the initial mount-time load (call #1) to resolve and render.
+    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByText('Initial')).toBeInTheDocument());
 
-    // type a query
+    // type a query — this should trigger a NEW (2nd) call, not just "any" call
     const q = screen.getByTestId('query');
-    await act(async () => { fireEvent.change(q, { target: { value: 'm' } }); });
+    await act(async () => {
+      fireEvent.change(q, { target: { value: 'm' } });
+    });
+    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledTimes(2));
 
-    // recipeAPI.search should be called for the query
-    await waitFor(() => expect((recipeAPI.search as jest.Mock)).toHaveBeenCalled());
     // ensure last call contained the query
     const lastCall = (recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0];
     expect(lastCall[0]).toMatchObject(expect.objectContaining({ q: 'm' }));
 
+    await waitFor(() => expect(screen.getByText('Match')).toBeInTheDocument());
+
     // clear the query
-    await act(async () => { fireEvent.change(q, { target: { value: '' } }); });
+    await act(async () => {
+      fireEvent.change(q, { target: { value: '' } });
+    });
 
     // after clearing (user has interacted), results should be hidden (empty list)
-    expect(screen.queryByText('Match')).toBeNull();
+    await waitFor(() => expect(screen.queryByText('Match')).toBeNull());
   });
 
   test('setTags triggers search when user has interacted and query present', async () => {
-    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([]); // initial
+    // Call #1: initial mount-time load
+    // Call #2: triggered by setQuery('a')
+    // Call #3: triggered by setTags('chicken') — returns the filtered list
+    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([]);
+    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([]);
     (recipeAPI.search as jest.Mock).mockResolvedValueOnce([
       { name: 'Filtered', url: 'recipes/5' },
     ]);
 
     render(<TestHarness />);
 
-    await waitFor(() => expect((recipeAPI.search as jest.Mock)).toHaveBeenCalled());
+    // Wait for the initial load (call #1) specifically, not just "any call ever".
+    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledTimes(1));
 
     const q = screen.getByTestId('query');
-    // simulate user typing so hasInteracted becomes true
-    await act(async () => { fireEvent.change(q, { target: { value: 'a' } }); });
+    // simulate user typing so hasInteracted becomes true — this must produce call #2
+    await act(async () => {
+      fireEvent.change(q, { target: { value: 'a' } });
+    });
+    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledTimes(2));
 
     const tags = screen.getByTestId('tags');
-    await act(async () => userEvent.type(tags, 'chicken'));
+    // set full tags value in one change event to avoid multiple incremental searches
+    await act(async () => {
+      fireEvent.change(tags, { target: { value: 'chicken' } });
+    });
+    // This must be call #3 specifically — not a stale truthy check left over
+    // from call #1 or #2, which was the root cause of the original flakiness.
+    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(screen.getByText('Filtered')).toBeInTheDocument());
 
-    await waitFor(() => expect((recipeAPI.search as jest.Mock)).toHaveBeenCalled());
-    // last call should include the tags value
-    expect((recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0][0]).toMatchObject({ q: 'a', tags: 'chicken' });
-
-    expect(screen.getByText('Filtered')).toBeInTheDocument();
+    // last call should include both the query and the tags value
+    expect((recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0][0]).toMatchObject({
+      q: 'a',
+      tags: 'chicken',
+    });
   });
 
   test('error during search surfaces error state but does not throw', async () => {

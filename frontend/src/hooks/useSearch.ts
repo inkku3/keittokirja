@@ -111,34 +111,34 @@ export function useSearch() {
   };
 
   const doSearch = async (q: string, t: string, opts?: { refreshOnly?: boolean }) => {
-    // Cancel previous
     if (abortRef.current) {
       try { abortRef.current.abort(); } catch (_) {}
     }
     const controller = new AbortController();
     abortRef.current = controller;
 
-    if (!opts?.refreshOnly) {
-      setIsLoading(true);
-    }
+    if (!opts?.refreshOnly) setIsLoading(true);
     setError(null);
 
     try {
       const items = await recipeAPI.search({ q, tags: t }, controller.signal);
-      // store in cache
+
+      // Ignore this response if a newer search has started since we began
+      if (abortRef.current !== controller) return;
+
       const key = cacheKey(q, t);
       cacheRef.current.set(key, items);
       setResults(items);
     } catch (err: any) {
-      if (err?.name === 'CanceledError' || err?.name === 'AbortError') {
-        // Request was aborted — ignore
-        return;
-      }
+      if (abortRef.current !== controller) return; // stale error, ignore
+      if (err?.name === 'CanceledError' || err?.name === 'AbortError') return;
       console.error('Search request failed', err);
       setError('Hakutulos epäonnistui');
     } finally {
-      setIsLoading(false);
-      abortRef.current = null;
+      if (abortRef.current === controller) {
+        setIsLoading(false);
+        abortRef.current = null;
+      }
     }
   };
 

@@ -4,7 +4,6 @@ interface RecipeImageProps {
   recipeId: string;
   title: string;
   imagePath?: string;
-  fallbackImage?: string;
 }
 
 export function RecipeImage({

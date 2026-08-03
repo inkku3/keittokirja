@@ -4,20 +4,14 @@ interface ResponsiveRecipeImageProps {
   recipeId: string;
   title: string;
   imagePath?: string;
-  fallbackImage?: string;
   className?: string;
-  showPlaceholder?: boolean;
-  placeholderText?: string;
 }
 
 export function ResponsiveRecipeImage({
   recipeId,
   title,
   imagePath,
-  fallbackImage,
   className = 'foodpic',
-  showPlaceholder = true,
-  placeholderText = 'No image available',
 }: ResponsiveRecipeImageProps) {
   const { currentImageSrc, isLoading, hasError, handleImageLoad, handleImageError } =
     useImageLoader({

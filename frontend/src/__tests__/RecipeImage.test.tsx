@@ -3,7 +3,8 @@ import { RecipeImage } from '../components/RecipeImage';
 
 describe('RecipeImage', () => {
   test('uses provided image_path first and falls back through candidates then hides image', () => {
-    render(<RecipeImage recipeId="r2" title="Toast" imagePath={"/custom/toast.png"} fallbackImage={'/fallback.png'} />);
+    // No fallbackImage prop — legacy parity: when all candidates fail the image is removed
+    render(<RecipeImage recipeId="r2" title="Toast" imagePath={'/custom/toast.png'} />);
 
     const img = screen.getByAltText('Toast') as HTMLImageElement;
     expect(img).toBeInTheDocument();
@@ -22,10 +23,6 @@ describe('RecipeImage', () => {
     // Simulate error -> recipes/img/r2.jpeg
     fireEvent.error(img);
     expect(img.src).toContain('recipes/img/r2.jpeg');
-
-    // Simulate error -> fallback
-    fireEvent.error(img);
-    expect(img.src).toContain('/fallback.png');
 
     // Simulate final error -> component should hide image (null)
     fireEvent.error(img);
