@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, Query, Request, HTTPException, Response
 from typing import List, Optional
 import logging
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from database import get_db
-from repositories.recipes import search_for_legacy
+from models import Recipe as RecipeModel, RecipeTag
 from schemas import LegacySearchItem
 
 router = APIRouter(prefix="/api", tags=["search"])
-
 logger = logging.getLogger('keittokirja.routers.search')
 
 @router.get('/search', response_model=List[LegacySearchItem])
@@ -21,30 +21,63 @@ async def search_endpoint(
     db: Session = Depends(get_db)
 ) -> List[LegacySearchItem]:
     """
-    Legacy-compatible search endpoint.
+    Legacy‑compatible search endpoint.
 
-    Behavior:
-    - If q is empty/omitted and no tags: returns full alphabetically-sorted list (up to limit).
-    - Matching: case-insensitive substring on title.
-    - Tag filter: comma-separated tokens; recipe must include all tokens (AND semantics).
-
-    Caching / headers:
-    - For live per-keystroke search, responses are marked as private and not cached by shared CDNs by default.
-    - Set Cache-Control: private, max-age=0, no-store to ensure clients always get fresh results while allowing browser control.
+    - If q is empty/omitted and no tags: returns full alphabetically‑sorted list (up to limit).
+    - Matching: case‑insensitive substring on title.
+    - Tag filter: comma‑separated tokens; recipe must include all tokens (AND semantics).
     """
     try:
         client = request.client.host if request.client else 'unknown'
-        logger.info('Search request from %s q=%s tags=%s limit=%s offset=%s', client, q, tags, limit, offset)
+        logger.info('Search request from %s q=%s tags=%s', client, q, tags)
 
-        results = search_for_legacy(db, q=q, tags=tags, limit=limit, offset=offset)
+        # Build base query
+        query = db.query(RecipeModel)
 
-        # Set conservative caching headers to support live search without stale responses
-        # Browser will not cache; shared CDNs will treat as private. Adjust in deployment if using edge caching.
+        # Apply title filter if q is present
+        if q and q.strip():
+            query = query.filter(func.lower(RecipeModel.title).contains(q.lower()))
+
+        # Apply tag filter if provided
+        if tags:
+            tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+            if tag_list:
+                # Subquery to find recipe_ids that have all given tags
+                subq = db.query(RecipeTag.recipe_id) \
+                          .filter(RecipeTag.tag.in_(tag_list)) \
+                          .group_by(RecipeTag.recipe_id) \
+                          .having(func.count(RecipeTag.tag) == len(tag_list))
+                recipe_ids = [row[0] for row in subq.all()]
+                if not recipe_ids:
+                    # No recipes match, return empty list
+                    return []
+                query = query.filter(RecipeModel.id.in_(recipe_ids))
+
+        # Order by title
+        query = query.order_by(RecipeModel.title)
+
+        # Apply limit and offset
+        recipes = query.offset(offset).limit(limit).all()
+
+        # Convert to LegacySearchItem
+        results = []
+        for recipe in recipes:
+            tags_list = [tag.tag for tag in recipe.tags]
+            tags_str = ",".join(tags_list) if tags_list else None
+            results.append(LegacySearchItem(
+                name=recipe.title,
+                url=f"recipes/{recipe.id}",
+                tags=tags_str,
+                image_path=None
+            ))
+
+        # Set cache‑control headers to prevent stale responses
         response.headers['Cache-Control'] = 'private, max-age=0, no-store, no-cache, must-revalidate'
         response.headers['Pragma'] = 'no-cache'
 
-        logger.info('Search returning %d items to %s', len(results), client)
+        logger.info('Search returning %d items', len(results))
         return results
+
     except Exception as e:
-        logger.exception('Search endpoint failed: %s', e)
+        logger.exception('Search failed: %s', e)
         raise HTTPException(status_code=500, detail='Search failed')

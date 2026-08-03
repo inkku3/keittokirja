@@ -1,25 +1,33 @@
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
-from sqlalchemy.orm import sessionmaker
+from fastapi.testclient import TestClient
 
-from database import Base
-
-
-@pytest.fixture(scope='function')
-def engine():
-    # Use StaticPool with check_same_thread=False so SQLite :memory: DB is shared across threads
-    engine = create_engine(
-        'sqlite:///:memory:',
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    # Create schema for each test
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    engine.dispose()
+from database import SessionLocal, get_db
+from main import app
 
 
-@pytest.fixture(scope='function')
-def SessionLocal(engine):
-    return sessionmaker(bind=engine)
+@pytest.fixture(scope="function")
+def db():
+    db = SessionLocal()
+    try:
+        yield db
+        db.rollback()
+    finally:
+        db.close()
+
+
+@pytest.fixture(scope="function")
+def client(db):
+    def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
