@@ -1,10 +1,13 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import './App.css';
+import { DarkModeProvider } from './components/DarkModeProvider';
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <DarkModeProvider>
+    <RouterProvider router={router} />
+    </DarkModeProvider>
+  );
 }
 
 export default App;
-

@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { DarkModeButton } from '../components/DarkModeButton';
+import { DarkModeButton } from '../components/Buttons'; // ← updated path
 import { useDarkMode } from '../hooks/useDarkMode';
 
 function TestHookUser() {

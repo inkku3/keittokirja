@@ -2,30 +2,26 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useDarkMode } from '../hooks/useDarkMode';
 
-interface DarkModeProviderProps {
-  children: ReactNode;
-  initialDarkMode?: boolean;
-}
-
 export function DarkModeProvider({
-  children,
-  initialDarkMode = true,
-}: DarkModeProviderProps) {
-  const { isDarkMode } = useDarkMode(initialDarkMode);
+    children,
+    initialDarkMode = true,
+}: {
+    children: ReactNode;
+    initialDarkMode?: boolean;
+}) {
+    const { isDarkMode } = useDarkMode(initialDarkMode);
 
-  useEffect(() => {
-    // Apply dark mode to document on mount and updates
-    const htmlElement = document.documentElement;
-    const bodyElement = document.body;
+    useEffect(() => {
+        const htmlElement = document.documentElement;
+        const bodyElement = document.body;
+        if (isDarkMode) {
+            htmlElement.classList.add('dark-mode');
+            bodyElement.classList.add('dark-mode');
+        } else {
+            htmlElement.classList.remove('dark-mode');
+            bodyElement.classList.remove('dark-mode');
+        }
+    }, [isDarkMode]);
 
-    if (isDarkMode) {
-      htmlElement.classList.add('dark-mode');
-      bodyElement.classList.add('dark-mode');
-    } else {
-      htmlElement.classList.remove('dark-mode');
-      bodyElement.classList.remove('dark-mode');
-    }
-  }, [isDarkMode]);
-
-  return <>{children}</>;
+    return <>{children}</>;
 }

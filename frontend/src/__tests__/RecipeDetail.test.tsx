@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
-// Mock the API client used by the hook
 jest.mock('../api/recipes', () => ({
   recipeAPI: {
     getById: jest.fn(),
@@ -9,7 +8,7 @@ jest.mock('../api/recipes', () => ({
 }));
 
 import { recipeAPI } from '../api/recipes';
-import { RecipeDetailPage } from '../components/RecipeDetailPage';
+import { RecipeDetailPage } from '../pages/RecipeDetailPage';
 
 describe('RecipeDetailPage', () => {
   afterEach(() => {

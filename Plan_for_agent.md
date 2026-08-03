@@ -77,9 +77,5 @@ Read the file ../CI_FAILURE_REPORT.md at the project root — it documents real,
 /plan Verify site.webmanifest, favicons, and fallback.png work identically in the new React app (installability, icons, offline fallback behavior if any). Fix any discrepancies found against the legacy version.
 ```
 
-9. Final diff pass
 
-```
-/plan Compare the migrated React + FastAPI + PostgreSQL app against the original /legacy site feature by feature (layout, recipe list, recipe lookup, search, dark mode, PWA behavior) and list every remaining visual or behavioral difference. Do not fix anything yet, just report.
-```
 

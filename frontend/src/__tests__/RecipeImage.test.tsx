@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RecipeImage } from '../components/RecipeImage';
+import { RecipeImage } from '../components/RecipeDisplay';
 
 describe('RecipeImage', () => {
   test('uses provided image_path first and falls back through candidates then hides image', () => {

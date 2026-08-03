@@ -1,46 +1,45 @@
 from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+from typing import Optional, List
 
+# Base recipe – matches database columns
 class RecipeBase(BaseModel):
     title: str
-    tags: Optional[str] = None
-    ingredients: str
-    instructions: str
-    info: Optional[str] = None
-    image_path: Optional[str] = None
-
-class RecipeCreate(RecipeBase):
-    id: str
-
-class RecipeUpdate(BaseModel):
-    title: Optional[str] = None
-    tags: Optional[str] = None
     ingredients: Optional[str] = None
     instructions: Optional[str] = None
     info: Optional[str] = None
-    image_path: Optional[str] = None
+    # tags will be handled separately (via list or string)
+
+class RecipeCreate(RecipeBase):
+    id: str
+    tags: Optional[List[str]] = None   # optional list of tags
+
+class RecipeUpdate(BaseModel):
+    title: Optional[str] = None
+    ingredients: Optional[str] = None
+    instructions: Optional[str] = None
+    info: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 class Recipe(RecipeBase):
     id: str
-    created_at: datetime
-    updated_at: datetime
-    
+    tags: Optional[str] = None   # comma-separated string for frontend compatibility
+    image_path: Optional[str] = None   # not in DB, but kept for frontend
+    created_at: Optional[str] = None   # not in DB
+    updated_at: Optional[str] = None
+
     class Config:
         from_attributes = True
 
-# Models matching the legacy JSON shapes
-class LegacyListItem(BaseModel):
-    name: str
-    url: str
-    image_path: Optional[str] = None
-
-# Search result item used by the legacy search endpoint — includes tags to allow frontend
-# to perform client-side tag display/filtering if needed.
+# Legacy search item – unchanged
 class LegacySearchItem(BaseModel):
     name: str
     url: str
     tags: Optional[str] = None
+    image_path: Optional[str] = None
+
+class LegacyListItem(BaseModel):
+    name: str
+    url: str
     image_path: Optional[str] = None
 
 class LegacyRecipeDetail(BaseModel):
@@ -51,5 +50,4 @@ class LegacyRecipeDetail(BaseModel):
     image_path: Optional[str] = None
 
     class Config:
-        # allow population from ORM objects or attribute access
         from_attributes = True

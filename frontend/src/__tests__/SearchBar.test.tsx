@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
-// Mock the API client
 jest.mock('../api/recipes', () => ({
   recipeAPI: {
     search: jest.fn(),
@@ -8,7 +7,7 @@ jest.mock('../api/recipes', () => ({
 }));
 
 import { recipeAPI } from '../api/recipes';
-import { SearchBar } from '../components/SearchBar';
+import { SearchBar } from '../components/Search'; // ← updated path
 
 describe('SearchBar', () => {
   afterEach(() => {
