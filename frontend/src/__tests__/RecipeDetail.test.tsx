@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
-jest.mock('../api/recipes', () => ({
+vi.mock('../api/recipes', () => ({
   recipeAPI: {
-    getById: jest.fn(),
+    getById: vi.fn(),
   },
 }));
 
@@ -12,11 +12,11 @@ import { RecipeDetailPage } from '../pages/RecipeDetailPage';
 
 describe('RecipeDetailPage', () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   test('shows loading then renders recipe details', async () => {
-    (recipeAPI.getById as jest.Mock).mockResolvedValueOnce({
+    (recipeAPI.getById as Mock).mockResolvedValueOnce({
       id: 'r1',
       title: 'Pancake',
       ingredients: 'Flour\nEggs',
@@ -52,7 +52,7 @@ describe('RecipeDetailPage', () => {
   test('shows 404 UI when API returns 404', async () => {
     const err: any = new Error('Not found');
     err.response = { status: 404 };
-    (recipeAPI.getById as jest.Mock).mockRejectedValueOnce(err);
+    (recipeAPI.getById as Mock).mockRejectedValueOnce(err);
 
     render(
       <MemoryRouter initialEntries={["/recipe/notfound"]}>
@@ -67,7 +67,7 @@ describe('RecipeDetailPage', () => {
   });
 
   test('shows friendly error and does not crash on network failure', async () => {
-    (recipeAPI.getById as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    (recipeAPI.getById as Mock).mockRejectedValueOnce(new Error('Network error'));
 
     render(
       <MemoryRouter initialEntries={["/recipe/netfail"]}>

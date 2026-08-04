@@ -1,5 +1,4 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import '@testing-library/jest-dom';
 
 import { DarkModeButton } from '../components/Buttons'; // ← updated path
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -19,7 +18,7 @@ describe('Dark mode hook and button', () => {
     // Ensure clean body classes and storage before each test
     document.body.className = '';
     window.localStorage.removeItem('isDarkMode');
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   afterEach(() => {

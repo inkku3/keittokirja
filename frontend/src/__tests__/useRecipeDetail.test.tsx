@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
 // Mock the API client used by the hook
-jest.mock('../api/recipes', () => ({
+vi.mock('../api/recipes', () => ({
   recipeAPI: {
-    getById: jest.fn(),
+    getById: vi.fn(),
   },
 }));
 
@@ -24,11 +24,11 @@ function TestHarness({ id }: { id?: string }) {
 
 describe('useRecipeDetail hook', () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   test('loads recipe and updates title and document.title', async () => {
-    (recipeAPI.getById as jest.Mock).mockResolvedValueOnce({
+    (recipeAPI.getById as Mock).mockResolvedValueOnce({
       id: 'r1',
       title: 'Pancake',
       ingredients: 'Flour\nEggs',
@@ -50,7 +50,7 @@ describe('useRecipeDetail hook', () => {
   test('sets notFound when API returns 404', async () => {
     const err: any = new Error('Not found');
     err.response = { status: 404 };
-    (recipeAPI.getById as jest.Mock).mockRejectedValueOnce(err);
+    (recipeAPI.getById as Mock).mockRejectedValueOnce(err);
 
     render(<TestHarness id="doesnotexist" />);
 
@@ -58,8 +58,8 @@ describe('useRecipeDetail hook', () => {
   });
 
   test('sets error and logs on network failure', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    (recipeAPI.getById as jest.Mock).mockRejectedValueOnce(new Error('Network fail'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    (recipeAPI.getById as Mock).mockRejectedValueOnce(new Error('Network fail'));
 
     render(<TestHarness id="netfail" />);
 
@@ -70,7 +70,7 @@ describe('useRecipeDetail hook', () => {
 
   test('handles malformed data without crashing', async () => {
     // return object missing required fields
-    (recipeAPI.getById as jest.Mock).mockResolvedValueOnce({ id: 'bad', title: null });
+    (recipeAPI.getById as Mock).mockResolvedValueOnce({ id: 'bad', title: null });
 
     render(<TestHarness id="bad" />);
 

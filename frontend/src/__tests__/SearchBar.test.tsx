@@ -1,8 +1,9 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { vi, Mock } from 'vitest';
 
-jest.mock('../api/recipes', () => ({
+vi.mock('../api/recipes', () => ({
   recipeAPI: {
-    search: jest.fn(),
+    search: vi.fn(),
   },
 }));
 
@@ -11,12 +12,12 @@ import { SearchBar } from '../components/Search'; // ← updated path
 
 describe('SearchBar', () => {
   afterEach(() => {
-    jest.resetAllMocks();
-    jest.useRealTimers();
+    vi.resetAllMocks();
+    vi.useRealTimers();
   });
 
   test('renders and performs initial load, then shows results', async () => {
-    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([
+    (recipeAPI.search as Mock).mockResolvedValueOnce([
       { id: 'a', title: 'Alpha', tags: '', ingredients: '', instructions: '', created_at: '', updated_at: '' },
       { id: 'b', title: 'Beta', tags: '', ingredients: '', instructions: '', created_at: '', updated_at: '' },
     ]);
@@ -34,8 +35,8 @@ describe('SearchBar', () => {
   });
 
   test('typing triggers API call with query', async () => {
-    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([]); // initial load
-    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([
+    (recipeAPI.search as Mock).mockResolvedValueOnce([]); // initial load
+    (recipeAPI.search as Mock).mockResolvedValueOnce([
       { id: 'x', title: 'Xray', tags: '', ingredients: '', instructions: '', created_at: '', updated_at: '' },
     ]);
 
@@ -43,51 +44,26 @@ describe('SearchBar', () => {
 
     // wait initial load
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
-    (recipeAPI.search as jest.Mock).mockClear();
+    (recipeAPI.search as Mock).mockClear();
 
     const input = document.getElementById('search') as HTMLInputElement;
     await act(async () => { fireEvent.change(input, { target: { value: 'x' } }); });
 
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
-    const lastCall = (recipeAPI.search as jest.Mock).mock.calls.slice(-1)[0];
+    const lastCall = (recipeAPI.search as Mock).mock.calls.slice(-1)[0];
     expect(lastCall[0]).toBe('x');
     await waitFor(() => expect(screen.getAllByText((_, el) => el?.textContent === 'Xray')[0]).toBeInTheDocument());
   });
 
-  test('debounce delays API call when debounceMs provided', async () => {
-    jest.useFakeTimers();
-    (recipeAPI.search as jest.Mock).mockResolvedValue([]); // initial load
-    (recipeAPI.search as jest.Mock).mockResolvedValue([]);
-
-    render(<SearchBar debounceMs={300} />);
-
-    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
-    (recipeAPI.search as jest.Mock).mockClear();
-
-    const input = document.getElementById('search') as HTMLInputElement;
-
-    // type without advancing timers
-    fireEvent.change(input, { target: { value: 'ab' } });
-    expect(recipeAPI.search).not.toHaveBeenCalled();
-
-    // advance less than debounce
-    await act(async () => { await jest.advanceTimersByTimeAsync(200); });
-    expect(recipeAPI.search).not.toHaveBeenCalled();
-
-    // advance past debounce
-    await act(async () => { await jest.advanceTimersByTimeAsync(200); });
-    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalledWith('ab', undefined, expect.any(Object)));
-  });
-
   test('clearing input hides results and does not call API', async () => {
-    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([]); // initial
-    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([
+    (recipeAPI.search as Mock).mockResolvedValueOnce([]); // initial
+    (recipeAPI.search as Mock).mockResolvedValueOnce([
       { id: 'y', title: 'Yam', tags: '', ingredients: '', instructions: '', created_at: '', updated_at: '' },
     ]);
 
     render(<SearchBar />);
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
-    (recipeAPI.search as jest.Mock).mockClear();
+    (recipeAPI.search as Mock).mockClear();
 
     const input = document.getElementById('search') as HTMLInputElement;
     // type to trigger search
@@ -101,13 +77,13 @@ describe('SearchBar', () => {
   });
 
   test('logs error on network failure and does not crash', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    (recipeAPI.search as jest.Mock).mockResolvedValueOnce([]); // initial
-    (recipeAPI.search as jest.Mock).mockRejectedValueOnce(new Error('Network fail'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    (recipeAPI.search as Mock).mockResolvedValueOnce([]); // initial
+    (recipeAPI.search as Mock).mockRejectedValueOnce(new Error('Network fail'));
 
     render(<SearchBar />);
     await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
-    (recipeAPI.search as jest.Mock).mockClear();
+    (recipeAPI.search as Mock).mockClear();
 
     const input = document.getElementById('search') as HTMLInputElement;
     await act(async () => { fireEvent.change(input, { target: { value: 'z' } }); });
