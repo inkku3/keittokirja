@@ -26,7 +26,7 @@ async function initApp(){
     const db = getFirestore(app);
 
     const appCheck = initializeAppCheck(app, {
-            provider: new ReCaptchaV3Provider('6LfBAFwrAAAAAGzmg3_9Y2HCZY7eczwvVOVfFyCm'), 
+            provider: new ReCaptchaV3Provider('REDACTED'),
             isTokenAutoRefreshEnabled: true 
     });
 
