@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { recipeAPI } from '../api/recipes';
 import type { Recipe } from '../api/recipes';
 
@@ -113,6 +113,13 @@ export function FilterManager({
         },
         [onResultsChange]
     );
+
+    // Populate with the full list on mount, before the user has touched any
+    // filter — otherwise the menu shows "no recipes" until they click something.
+    useEffect(() => {
+        handleFilterChange([]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <FilterDropdown

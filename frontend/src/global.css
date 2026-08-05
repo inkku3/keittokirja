@@ -184,6 +184,33 @@ a:hover { color: var(--link-hover); }
 .dark-mode .search-container input[type=text]:focus{
   background: #302f2f;
 }
+.search-container input[type=text]:-webkit-autofill,
+.search-container input[type=text]:-webkit-autofill:hover,
+.search-container input[type=text]:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0px 1000px white inset;
+  box-shadow: 0 0 0px 1000px white inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.dark-mode .search-container input[type=text]:-webkit-autofill,
+.dark-mode .search-container input[type=text]:-webkit-autofill:hover,
+.dark-mode .search-container input[type=text]:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--dark-text);
+  -webkit-box-shadow: 0 0 0px 1000px #2b2b2b inset;
+  box-shadow: 0 0 0px 1000px #2b2b2b inset;
+}
+
+/* Search-result match highlighting — override the yellow <mark> UA default */
+.search-highlight {
+  background: rgba(0, 0, 0, 0.1);
+  color: inherit;
+  font-weight: inherit;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+.dark-mode .search-highlight {
+  background: rgba(255, 255, 255, 0.2);
+}
 
 /* recipelist (search results) */
 .recipelist{
@@ -291,6 +318,7 @@ a:hover { color: var(--link-hover); }
 }
 .dropdown-toolbar {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 10px;
 }

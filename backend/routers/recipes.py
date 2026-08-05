@@ -45,19 +45,19 @@ def _recipe_to_schema(recipe: RecipeModel) -> Recipe:
         updated_at=None,
     )
 
-@router.get("/", response_model=List[LegacyListItem])
+@router.get("/", response_model=List[Recipe])
 async def list_recipes(
     request: Request,
     sort_by: str = Query("title", regex="^(title|id)$"),
     order: str = Query("asc", regex="^(asc|desc)$"),
     db: Session = Depends(get_db)
-) -> List[LegacyListItem]:
+) -> List[Recipe]:
     """
-    List all recipes in the legacy {name, url, image_path} shape.
+    List all recipes in the standard Recipe shape (id, title, ingredients, instructions, etc.).
     """
     try:
         client_addr = request.client.host if request.client else 'unknown'
-        logger.info("Legacy recipe list request from %s", client_addr)
+        logger.info("Recipe list request from %s", client_addr)
 
         query = db.query(RecipeModel)
         if sort_by == "title":
@@ -70,7 +70,7 @@ async def list_recipes(
             query = query.order_by(asc(order_col))
 
         recipes = query.all()
-        items = [_recipe_to_legacy_list_item(r) for r in recipes]
+        items = [_recipe_to_schema(r) for r in recipes]
         logger.info("Returning %d items", len(items))
         return items
     except Exception as e:
@@ -123,13 +123,13 @@ async def get_random_recipe(db: Session = Depends(get_db)) -> Recipe:
         raise HTTPException(status_code=404, detail="No recipes available")
     return _recipe_to_schema(recipe)
 
-@router.get("/{recipe_id}", response_model=LegacyRecipeDetail)
+@router.get("/{recipe_id}", response_model=Recipe)
 async def get_recipe(
     request: Request,
     recipe_id: str = Path(..., description="Recipe ID"),
     db: Session = Depends(get_db)
-) -> LegacyRecipeDetail:
-    """Get a specific recipe in legacy detail shape."""
+) -> Recipe:
+    """Get a specific recipe in standard Recipe shape."""
     try:
         client_addr = request.client.host if request.client else 'unknown'
         logger.info("Recipe detail request for id=%s from %s", recipe_id, client_addr)
@@ -138,7 +138,7 @@ async def get_recipe(
         if not recipe:
             raise HTTPException(status_code=404, detail=f"Recipe '{recipe_id}' not found")
 
-        return _recipe_to_legacy_detail(recipe)
+        return _recipe_to_schema(recipe)
     except HTTPException:
         raise
     except Exception as e:

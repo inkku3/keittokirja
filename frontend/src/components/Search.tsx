@@ -79,7 +79,9 @@ export function SearchBar({
                 if (!mounted) return;
                 const coerced = coerceToRecipes(data);
                 setResults(coerced);
-                setShowResults(true);
+                // Don't auto-open the dropdown on initial load — just warm up the
+                // data and clear the loading state. Only show results once the
+                // user actually types something (see doSearch below).
                 onSearchResults?.(coerced);
             } catch (err: any) {
                 if (err?.name === 'CanceledError' || err?.message === 'canceled') {
@@ -182,6 +184,7 @@ export function SearchBar({
         value={searchTerm}
         onChange={(e) => handleChange(e.target.value)}
         disabled={initialLoading}
+        autoComplete="off"
         />
         </div>
 

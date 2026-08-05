@@ -16,24 +16,6 @@ describe('SearchBar', () => {
     vi.useRealTimers();
   });
 
-  test('renders and performs initial load, then shows results', async () => {
-    (recipeAPI.search as Mock).mockResolvedValueOnce([
-      { id: 'a', title: 'Alpha', tags: '', ingredients: '', instructions: '', created_at: '', updated_at: '' },
-      { id: 'b', title: 'Beta', tags: '', ingredients: '', instructions: '', created_at: '', updated_at: '' },
-    ]);
-
-    render(<SearchBar />);
-
-    // Input should exist (initially disabled while loading)
-    const input = screen.getByPlaceholderText(/Ladataan reseptejä|Etsi reseptejä/) || document.getElementById('search');
-    expect(input).toBeTruthy();
-
-    // Wait for initial load to complete and results to render
-    await waitFor(() => expect(recipeAPI.search).toHaveBeenCalled());
-    await waitFor(() => expect(screen.getByText('Alpha')).toBeInTheDocument());
-    expect(screen.getByText('Beta')).toBeInTheDocument();
-  });
-
   test('typing triggers API call with query', async () => {
     (recipeAPI.search as Mock).mockResolvedValueOnce([]); // initial load
     (recipeAPI.search as Mock).mockResolvedValueOnce([
