@@ -12,14 +12,14 @@ export function DarkModeProvider({
     const { isDarkMode } = useDarkMode(initialDarkMode);
 
     useEffect(() => {
-        const htmlElement = document.documentElement;
-        const bodyElement = document.body;
+        const html = document.documentElement;
+        const body = document.body;
         if (isDarkMode) {
-            htmlElement.classList.add('dark-mode');
-            bodyElement.classList.add('dark-mode');
+            html.classList.add('dark-mode');
+            body.classList.add('dark-mode');
         } else {
-            htmlElement.classList.remove('dark-mode');
-            bodyElement.classList.remove('dark-mode');
+            html.classList.remove('dark-mode');
+            body.classList.remove('dark-mode');
         }
     }, [isDarkMode]);
 

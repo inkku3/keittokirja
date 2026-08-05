@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeDetail } from '../hooks/useRecipeDetail';
 import { RecipeDetail } from '../components/RecipeDisplay';
-import { DarkModeButton } from '../components/Buttons';
+import { BackButton } from '../components/Buttons';
 
 export function RecipeDetailPage() {
   const { recipeId } = useParams<{ recipeId: string }>();
@@ -10,15 +10,11 @@ export function RecipeDetailPage() {
 
   if (error) {
     return (
-      <div className="content">
+      <div className="recipe-page">
+      <BackButton onClick={() => navigate('/')} />
       <div className="recipe">
       <div className="title">Virhe</div>
       <div className="info">{error}</div>
-      <div className="buttons">
-      <button className="toggleDark" onClick={() => navigate('/')}>
-      Takaisin alkuun
-      </button>
-      </div>
       </div>
       </div>
     );
@@ -26,7 +22,7 @@ export function RecipeDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="content">
+      <div className="recipe-page">
       <div className="recipe">
       <div id="header" className="title">Loading</div>
       </div>
@@ -36,12 +32,10 @@ export function RecipeDetailPage() {
 
   if (notFound) {
     return (
-      <div className="content">
+      <div className="recipe-page">
+      <BackButton onClick={() => navigate('/')} />
       <div className="recipe">
       <div id="header" className="title"><p>Could not load recipe.</p></div>
-      <div className="buttons">
-      <button className="toggleDark" onClick={() => navigate('/')}>Takaisin alkuun</button>
-      </div>
       </div>
       </div>
     );
@@ -49,7 +43,8 @@ export function RecipeDetailPage() {
 
   if (!recipe) {
     return (
-      <div className="content">
+      <div className="recipe-page">
+      <BackButton onClick={() => navigate('/')} />
       <div className="recipe">
       <div id="header" className="title">Reseptiä ei löytynyt</div>
       </div>
@@ -58,10 +53,8 @@ export function RecipeDetailPage() {
   }
 
   return (
-    <div className="content">
-    <div className="buttons">
-    <DarkModeButton />
-    </div>
+    <div className="recipe-page">
+    <BackButton onClick={() => navigate('/')} />
     <RecipeDetail recipe={recipe} />
     </div>
   );

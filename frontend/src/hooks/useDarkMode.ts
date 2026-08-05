@@ -1,47 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export function useDarkMode(initialState?: boolean) {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const stored = window.localStorage.getItem('isDarkMode');
-        if (stored !== null) return stored === 'true';
-      }
-    } catch (e) {
-      // access to localStorage failed (e.g., SSR or blocked), fall through to defaults
-    }
-    // Use provided initialState or default to true to match legacy
-    return initialState ?? true;
-  });
+const STORAGE_KEY = 'darkMode';
 
-  // Update DOM (body.classList) and localStorage when isDarkMode changes
+function getInitialValue(fallback: boolean): boolean {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored !== null) return stored === 'true';
+  } catch {
+    /* localStorage may be unavailable */
+  }
+  return fallback;
+}
+
+export function useDarkMode(initialDarkMode = true) {
+  const [isDarkMode, setIsDarkMode] = useState(() => getInitialValue(initialDarkMode));
+
   useEffect(() => {
-    const bodyElement = typeof document !== 'undefined' ? document.body : null;
-
-    if (bodyElement) {
-      if (isDarkMode) {
-        bodyElement.classList.add('dark-mode');
-      } else {
-        bodyElement.classList.remove('dark-mode');
-      }
-    }
-
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('isDarkMode', String(isDarkMode));
-      }
-    } catch (e) {
-      // ignore localStorage write errors
+      localStorage.setItem(STORAGE_KEY, String(isDarkMode));
+    } catch {
+      /* ignore */
     }
   }, [isDarkMode]);
 
   const toggleDarkMode = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
+    setIsDarkMode(prev => !prev);
   }, []);
 
-  return {
-    isDarkMode,
-    setIsDarkMode,
-    toggleDarkMode,
-  };
+  return { isDarkMode, toggleDarkMode };
 }

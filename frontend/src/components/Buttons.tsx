@@ -5,7 +5,6 @@ import type { Recipe } from '../api/recipes';
 
 const ERROR_DISMISS_MS = 5000;
 
-// ----- DarkModeButton -----
 export function DarkModeButton() {
     const { isDarkMode, toggleDarkMode } = useDarkMode();
     return (
@@ -20,7 +19,6 @@ export function DarkModeButton() {
     );
 }
 
-// ----- RandomRecipeButton -----
 export function RandomRecipeButton({
     className = 'random-recipe',
     id = 'randomRecipe',
@@ -41,7 +39,6 @@ export function RandomRecipeButton({
         }
     };
 
-    // Make sure a pending timeout doesn't fire after unmount
     useEffect(() => {
         return () => clearErrorTimeout();
     }, []);
@@ -82,12 +79,30 @@ export function RandomRecipeButton({
     );
 }
 
-// ----- ActionButtons -----
 export function ActionButtons({ onRandomClick }: { onRandomClick?: () => void }) {
     return (
         <div className="buttons">
         <DarkModeButton />
-        <RandomRecipeButton onRecipeSelected={() => onRandomClick?.()} />
+        <RandomRecipeButton {...(onRandomClick ? { onRecipeSelected: () => onRandomClick() } : {})} />
         </div>
+    );
+}
+
+export function BackButton({
+    className = 'back-button',
+    onClick,
+}: {
+    className?: string;
+    onClick?: () => void;
+}) {
+    return (
+        <button
+        className={className}
+        type="button"
+        onClick={onClick}
+        aria-label="Takaisin etusivulle"
+        >
+        ← Takaisin
+        </button>
     );
 }
