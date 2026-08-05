@@ -57,10 +57,17 @@ export function FilterDropdown({
 
     return (
         <div className="dropdown">
+        <div className="dropdown-toolbar">
         <button className="dropbtn" onClick={handleToggle}>
         Suodata
         {selectedFilters.size > 0 && ` (${selectedFilters.size})`}
         </button>
+        {selectedFilters.size > 0 && (
+            <button className="sortButtons clear-filters" onClick={clearFilters}>
+            Poista suodattimet
+            </button>
+        )}
+        </div>
         {internalOpen && (
             <div className="dropdown-content show">
             {FILTER_CATEGORIES.map((category) => (
@@ -73,11 +80,6 @@ export function FilterDropdown({
                 {category.label}
                 </button>
             ))}
-            {selectedFilters.size > 0 && (
-                <button className="sortButtons clear-filters" onClick={clearFilters}>
-                Poista suodattimet
-                </button>
-            )}
             </div>
         )}
         </div>

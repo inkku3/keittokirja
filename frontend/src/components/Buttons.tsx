@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { recipeAPI } from '../api/recipes';
 import type { Recipe } from '../api/recipes';
+
+const ERROR_DISMISS_MS = 5000;
 
 // ----- DarkModeButton -----
 export function DarkModeButton() {
@@ -30,10 +32,24 @@ export function RandomRecipeButton({
 }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const clearErrorTimeout = () => {
+        if (errorTimeoutRef.current) {
+            clearTimeout(errorTimeoutRef.current);
+            errorTimeoutRef.current = null;
+        }
+    };
+
+    // Make sure a pending timeout doesn't fire after unmount
+    useEffect(() => {
+        return () => clearErrorTimeout();
+    }, []);
 
     const handleClick = async () => {
         setIsLoading(true);
         setError(null);
+        clearErrorTimeout();
         try {
             const recipe = await recipeAPI.getRandom();
             onRecipeSelected?.(recipe);
@@ -43,6 +59,7 @@ export function RandomRecipeButton({
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Reseptiä ei voitu ladata';
             setError(message);
+            errorTimeoutRef.current = setTimeout(() => setError(null), ERROR_DISMISS_MS);
             console.error('Failed to get random recipe:', err);
         } finally {
             setIsLoading(false);
