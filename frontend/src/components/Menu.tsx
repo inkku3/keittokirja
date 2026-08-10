@@ -101,10 +101,9 @@ export function MenuOverlayContent({
         }
     };
 
-    // Only move focus to the first recipe link when the menu is freshly
-    // opened. This is keyed on `isOpen` — NOT on the filtered list changing
-    // — otherwise picking a filter would "steal" focus and visually
-    // highlight the first result every time.
+    // Only move focus to the first recipe link when the menu is freshly opened.
+    // Keyed on isOpen, not on the filtered list, so picking a filter never steals
+    // focus and highlights the first result.
     useEffect(() => {
         if (!isOpen) return;
         const menu = recipeMenuRef.current;
@@ -115,32 +114,21 @@ export function MenuOverlayContent({
         }
     }, [isOpen]);
 
+    const handleLinkClick = (e: React.MouseEvent, recipe: Recipe) => {
+        e.preventDefault();
+        handleRecipeClick(recipe);
+    };
+
     return (
         <>
         <FilterManager onResultsChange={handleFilterChange} />
-        <div
-        className="recipeMenu"
-        id="recipeMenu"
-        ref={recipeMenuRef}
-        role="menu"
-        aria-label="Reseptivalikko"
-        onKeyDown={handleKeyDown}
-        >
+        <div className="recipeMenu" id="recipeMenu" ref={recipeMenuRef} role="menu" aria-label="Reseptivalikko" onKeyDown={handleKeyDown}>
         {displayedRecipes.length === 0 ? (
-            <div>
-            {selectedFilters.length > 0 ? 'Ei reseptejä valituilla suodattimilla' : 'Ei reseptejä'}
-            </div>
+            <div>{selectedFilters.length > 0 ? 'Ei reseptejä valituilla suodattimilla' : 'Ei reseptejä'}</div>
         ) : (
             displayedRecipes.map((recipe) => (
                 <div key={recipe.id}>
-
-                href="#"
-                onClick={(e) => {
-                    e.preventDefault();
-                    handleRecipeClick(recipe);
-                }}
-                role="menuitem"
-                >
+                <a href="#" onClick={(e) => handleLinkClick(e, recipe)} role="menuitem">
                 {recipe.title}
                 </a>
                 </div>

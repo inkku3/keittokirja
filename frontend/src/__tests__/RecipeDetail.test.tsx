@@ -14,8 +14,7 @@ describe('RecipeDetailPage', () => {
   afterEach(() => {
     vi.resetAllMocks();
   });
-
-  test('shows loading then renders recipe details', async () => {
+  test('shows no placeholder while loading, then renders recipe details without a layout jump', async () => {
     (recipeAPI.getById as Mock).mockResolvedValueOnce({
       id: 'r1',
       title: 'Pancake',
@@ -27,23 +26,25 @@ describe('RecipeDetailPage', () => {
 
     render(
       <MemoryRouter initialEntries={["/recipe/r1"]}>
-        <Routes>
-          <Route path="/recipe/:recipeId" element={<RecipeDetailPage />} />
-        </Routes>
+      <Routes>
+      <Route path="/recipe/:recipeId" element={<RecipeDetailPage />} />
+      </Routes>
       </MemoryRouter>
     );
 
-    // Loading state present initially
-    expect(screen.getByText('Loading')).toBeInTheDocument();
+    // Back button is present immediately...
+    expect(screen.getByLabelText('Takaisin etusivulle')).toBeInTheDocument();
+    // ...but no title/content placeholder is rendered while loading, so there's
+    // nothing differently-sized for the real content to "jump" away from.
+    expect(screen.queryByText('Pancake')).not.toBeInTheDocument();
+    expect(document.querySelector('.recipe')).toHaveAttribute('aria-busy', 'true');
 
-    // Wait for recipe title to appear
     await waitFor(() => expect(screen.getByText('Pancake')).toBeInTheDocument());
+    expect(document.querySelector('.recipe')).not.toHaveAttribute('aria-busy');
 
-    // Check that ingredients and instructions are rendered
     expect(screen.getByText(/Flour/)).toBeInTheDocument();
     expect(screen.getByText(/Mix and fry/)).toBeInTheDocument();
 
-    // Image should be present with provided src as alt text
     const img = screen.getByAltText('Pancake') as HTMLImageElement;
     expect(img).toBeInTheDocument();
     expect(img.src).toContain('/recipes/img/r1.png');

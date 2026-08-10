@@ -1,23 +1,24 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
-import { DarkModeButton } from '../components/Buttons'; // ← updated path
+import { DarkModeButton } from '../components/Buttons';
+import { DarkModeProvider } from '../components/DarkModeProvider';
 import { useDarkMode } from '../hooks/useDarkMode';
+
+const STORAGE_KEY = 'darkMode'; // must match hooks/useDarkMode.ts
 
 function TestHookUser() {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   return (
     <div>
-      <span data-testid="state">{String(isDarkMode)}</span>
-      <button onClick={toggleDarkMode}>toggle</button>
+    <span data-testid="state">{String(isDarkMode)}</span>
+    <button onClick={toggleDarkMode}>toggle</button>
     </div>
   );
 }
 
-describe('Dark mode hook and button', () => {
+describe('useDarkMode hook (state + persistence only)', () => {
   beforeEach(() => {
-    // Ensure clean body classes and storage before each test
-    document.body.className = '';
-    window.localStorage.removeItem('isDarkMode');
+    window.localStorage.removeItem(STORAGE_KEY);
     vi.restoreAllMocks();
   });
 
@@ -25,70 +26,81 @@ describe('Dark mode hook and button', () => {
     cleanup();
   });
 
-  test('useDarkMode defaults to true when localStorage missing and applies body.dark-mode', () => {
-    // ensure localStorage has no value
-    window.localStorage.removeItem('isDarkMode');
-
+  test('defaults to true when localStorage is empty', () => {
     render(<TestHookUser />);
-
-    const state = screen.getByTestId('state');
-    expect(state).toHaveTextContent('true');
-    expect(document.body.classList.contains('dark-mode')).toBe(true);
-    // localStorage should have been set to reflect value
-    expect(window.localStorage.getItem('isDarkMode')).toBe('true');
+    expect(screen.getByTestId('state')).toHaveTextContent('true');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('true');
   });
 
-  test('useDarkMode respects existing localStorage false and does not set dark-mode on body', () => {
-    window.localStorage.setItem('isDarkMode', 'false');
-
+  test('respects an existing localStorage value of false', () => {
+    window.localStorage.setItem(STORAGE_KEY, 'false');
     render(<TestHookUser />);
-
-    const state = screen.getByTestId('state');
-    expect(state).toHaveTextContent('false');
-    expect(document.body.classList.contains('dark-mode')).toBe(false);
+    expect(screen.getByTestId('state')).toHaveTextContent('false');
   });
 
-  test('toggle updates body class and persists to localStorage', () => {
-    // start false
-    window.localStorage.setItem('isDarkMode', 'false');
-
+  test('toggle flips state and persists to localStorage', () => {
+    window.localStorage.setItem(STORAGE_KEY, 'false');
     render(<TestHookUser />);
-
-    const state = screen.getByTestId('state');
-    expect(state).toHaveTextContent('false');
-    expect(document.body.classList.contains('dark-mode')).toBe(false);
 
     const toggleBtn = screen.getByText('toggle');
     fireEvent.click(toggleBtn);
+    expect(screen.getByTestId('state')).toHaveTextContent('true');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('true');
 
-    // after toggle, state should be true
-    expect(state).toHaveTextContent('true');
-    expect(document.body.classList.contains('dark-mode')).toBe(true);
-    expect(window.localStorage.getItem('isDarkMode')).toBe('true');
-
-    // toggle back
     fireEvent.click(toggleBtn);
-    expect(state).toHaveTextContent('false');
-    expect(document.body.classList.contains('dark-mode')).toBe(false);
-    expect(window.localStorage.getItem('isDarkMode')).toBe('false');
+    expect(screen.getByTestId('state')).toHaveTextContent('false');
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('false');
   });
 
-  test('DarkModeButton shows correct legacy labels and toggles on click', () => {
-    // default (no storage) -> true
-    window.localStorage.removeItem('isDarkMode');
-    render(<DarkModeButton />);
+  // Note: this hook intentionally does NOT touch document.body/html anymore —
+  // that DOM side effect belongs to DarkModeProvider, which is the single
+  // source of truth every dark-mode-aware component shares. See the
+  // integration tests below for that behavior.
+});
+
+describe('DarkModeProvider + DarkModeButton integration', () => {
+  beforeEach(() => {
+    document.documentElement.className = '';
+    document.body.className = '';
+    window.localStorage.removeItem(STORAGE_KEY);
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test('DarkModeButton requires a DarkModeProvider ancestor', () => {
+    // Rendering it standalone should throw — this is intentional: it's what
+    // guarantees the button can never drift out of sync with the class
+    // applied to the page (the original bug this fix addresses).
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => render(<DarkModeButton />)).toThrow(
+      /useDarkModeContext must be used within a DarkModeProvider/
+    );
+    consoleSpy.mockRestore();
+  });
+
+  test('button reflects and toggles the class applied to the document', () => {
+    window.localStorage.removeItem(STORAGE_KEY); // defaults to dark
+
+    render(
+      <DarkModeProvider>
+      <DarkModeButton />
+      </DarkModeProvider>
+    );
 
     const btn = screen.getByRole('button', { name: /Switch to light mode|Vaalea tila/i });
-    // initial label text should be legacy Finnish for dark enabled -> 'Vaalea tila'
     expect(btn).toHaveTextContent('Vaalea tila');
     expect(document.body.classList.contains('dark-mode')).toBe(true);
+    expect(document.documentElement.classList.contains('dark-mode')).toBe(true);
 
-    // click to toggle to light
     fireEvent.click(btn);
     expect(btn).toHaveTextContent('Tumma tila');
     expect(document.body.classList.contains('dark-mode')).toBe(false);
+    expect(document.documentElement.classList.contains('dark-mode')).toBe(false);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('false');
 
-    // click to toggle back to dark
     fireEvent.click(btn);
     expect(btn).toHaveTextContent('Vaalea tila');
     expect(document.body.classList.contains('dark-mode')).toBe(true);
