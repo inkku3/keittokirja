@@ -21,11 +21,14 @@ export function RecipeDetailPage() {
   }
 
   if (isLoading) {
+    // Intentionally render nothing here instead of a "Loading" placeholder.
+    // A short loading string occupies a different amount of space than the
+    // real title/content, causing a layout "whiplash" the instant the
+    // recipe data arrives. An empty container avoids that mismatch.
     return (
       <div className="recipe-page">
-      <div className="recipe">
-      <div id="header" className="title">Loading</div>
-      </div>
+      <BackButton onClick={() => navigate('/')} />
+      <div className="recipe" aria-busy="true" />
       </div>
     );
   }

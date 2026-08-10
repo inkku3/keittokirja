@@ -21,6 +21,7 @@ const FILTER_CATEGORIES = [
 ];
 
 // ----- FilterDropdown -----
+
 export function FilterDropdown({
     onFilterChange,
     isOpen = false,
@@ -56,7 +57,7 @@ export function FilterDropdown({
     };
 
     return (
-        <div className="dropdown">
+        <>
         <div className="dropdown-toolbar">
         <button className="dropbtn" onClick={handleToggle}>
         Suodata
@@ -82,7 +83,7 @@ export function FilterDropdown({
             ))}
             </div>
         )}
-        </div>
+        </>
     );
 }
 

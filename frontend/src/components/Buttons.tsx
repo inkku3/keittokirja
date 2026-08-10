@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { useDarkMode } from '../hooks/useDarkMode';
+import { useDarkModeContext } from './DarkModeProvider';
 import { recipeAPI } from '../api/recipes';
 import type { Recipe } from '../api/recipes';
 
 const ERROR_DISMISS_MS = 5000;
 
 export function DarkModeButton() {
-    const { isDarkMode, toggleDarkMode } = useDarkMode();
+    const { isDarkMode, toggleDarkMode } = useDarkModeContext();
     return (
         <button
         className="toggleDark"

@@ -35,6 +35,7 @@
   --ingredients-font-size: 1.05rem;
   --instructions-font-size: 1.05rem;
   --info-color: #4a4a4a;
+  --search-font-size: 1rem;
 
   --space-xs: 8px;
   --space-sm: 12px;
@@ -65,7 +66,6 @@ body {
   transition: all 0.2s ease;
 }
 
-/* Home page shell – locked viewport, no scroll */
 .content {
   display: flex;
   flex-direction: column;
@@ -73,7 +73,6 @@ body {
   overflow: hidden;
 }
 
-/* Recipe page – independent scroll, does NOT touch home layout */
 .recipe-page {
   min-height: 100vh;
   overflow-y: auto;
@@ -192,7 +191,7 @@ a:hover { color: var(--link-hover); }
   border: 1px solid rgba(0, 0, 0, 0.08);
   width: 100%;
   padding: var(--search-input-padding-vertical) var(--search-input-padding-horizontal);
-  font-size: medium;
+  font-size: var(--search-font-size);
   font-family: inherit;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
@@ -246,12 +245,17 @@ a:hover { color: var(--link-hover); }
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   background: rgba(255, 255, 255, 0.92);
-  font-size: 1.1rem;
+  font-size: var(--search-font-size);
   text-align: left;
   text-indent: 4%;
   z-index: 10;
 }
 .dark-mode .recipelist { background: var(--recipelist-bg-dark); color: var(--dark-text); }
+.recipelist a {
+  font-weight: 400;
+  font-size: var(--search-font-size);
+  font-family: var(--font-sans);
+}
 
 .recipe { max-width: 1000px; margin: 0 auto; padding: var(--recipe-padding-vertical) var(--recipe-padding-horizontal); min-height: 100vh; }
 .image-container { display:flex; flex-direction: column; align-items:center; margin-bottom: 80px; }
@@ -330,7 +334,9 @@ a:hover { color: var(--link-hover); }
   padding: 0 20px;
 }
 
-/* Sticky filter toolbar */
+/* Sticky filter toolbar. This is now a direct child of .overlay-content
+ *  (see Filter.tsx / Menu.tsx) so its containing block spans the full
+ *  scrollable content, not just the collapsible filter panel. */
 .dropdown-toolbar {
   display: flex;
   justify-content: center;
@@ -346,7 +352,7 @@ a:hover { color: var(--link-hover); }
 
 .recipeMenu {
   padding-top: 20px;
-  padding-bottom: 40px;
+  padding-bottom: 50vh;
 }
 
 .dropbtn {
@@ -363,10 +369,6 @@ a:hover { color: var(--link-hover); }
   background-color: var(--dropbtn-hover);
 }
 
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
 .dropdown-content {
   display: none;
   flex-wrap: wrap;
@@ -393,6 +395,13 @@ a:hover { color: var(--link-hover); }
 }
 .show {
   display: flex;
+}
+.dropdown-content.show {
+  animation: dropdownReveal 0.25s ease;
+}
+@keyframes dropdownReveal {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .menu-icon {
@@ -449,8 +458,8 @@ a:hover { color: var(--link-hover); }
   .info{ font-size: 0.85rem; }
   .ingredients pre { font-size: 1.0rem; }
   .instructions pre { font-size: 1.0rem; padding: 10px; }
-  .search-wrapper{ width: 80%; }
-  .search-container { width: 95%; }
-  .recipelist { width: 95%; }
-  .recipeMenu { padding-top: 20px; padding-bottom: 40px; margin-top: 0; margin-bottom: 0; }
+  .search-wrapper{ width: 95%; max-width: none; }
+  .search-container { width: 100%; }
+  .recipelist { width: 100%; }
+  .recipeMenu { padding-top: 20px; margin-top: 0; margin-bottom: 0; }
 }

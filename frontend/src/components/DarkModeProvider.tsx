@@ -1,6 +1,13 @@
-import { useEffect } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useDarkMode } from '../hooks/useDarkMode';
+
+interface DarkModeContextValue {
+    isDarkMode: boolean;
+    toggleDarkMode: () => void;
+}
+
+const DarkModeContext = createContext<DarkModeContextValue | undefined>(undefined);
 
 export function DarkModeProvider({
     children,
@@ -9,7 +16,7 @@ export function DarkModeProvider({
     children: ReactNode;
     initialDarkMode?: boolean;
 }) {
-    const { isDarkMode } = useDarkMode(initialDarkMode);
+    const { isDarkMode, toggleDarkMode } = useDarkMode(initialDarkMode);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -23,5 +30,18 @@ export function DarkModeProvider({
         }
     }, [isDarkMode]);
 
-    return <>{children}</>;
+    return (
+        <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+        {children}
+        </DarkModeContext.Provider>
+    );
+}
+
+// Shared dark-mode state
+export function useDarkModeContext() {
+    const ctx = useContext(DarkModeContext);
+    if (!ctx) {
+        throw new Error('useDarkModeContext must be used within a DarkModeProvider');
+    }
+    return ctx;
 }

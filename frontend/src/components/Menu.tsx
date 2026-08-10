@@ -13,7 +13,6 @@ export function HamburgerMenu({
 }) {
     const [internalOpen, setInternalOpen] = useState(isOpen);
 
-    // Sync internal state with the prop from parent
     useEffect(() => {
         setInternalOpen(isOpen);
     }, [isOpen]);
@@ -48,11 +47,14 @@ export function HamburgerMenu({
         </div>
     );
 }
+
 // ----- MenuOverlayContent -----
 export function MenuOverlayContent({
+    isOpen = false,
     onClose,
     onRecipeSelect,
 }: {
+    isOpen?: boolean;
     onClose?: () => void;
     onRecipeSelect?: (recipe: Recipe) => void;
 }) {
@@ -99,14 +101,19 @@ export function MenuOverlayContent({
         }
     };
 
+    // Only move focus to the first recipe link when the menu is freshly
+    // opened. This is keyed on `isOpen` — NOT on the filtered list changing
+    // — otherwise picking a filter would "steal" focus and visually
+    // highlight the first result every time.
     useEffect(() => {
+        if (!isOpen) return;
         const menu = recipeMenuRef.current;
         if (!menu) return;
         const first = menu.querySelector<HTMLAnchorElement>('a');
         if (first) {
             setTimeout(() => first.focus(), 0);
         }
-    }, [displayedRecipes.length]);
+    }, [isOpen]);
 
     return (
         <>
@@ -126,7 +133,7 @@ export function MenuOverlayContent({
         ) : (
             displayedRecipes.map((recipe) => (
                 <div key={recipe.id}>
-                <a
+
                 href="#"
                 onClick={(e) => {
                     e.preventDefault();
@@ -192,7 +199,7 @@ export function Navigation({
         &times;
         </span>
         <div className="overlay-content">
-        <MenuOverlayContent onClose={handleClose} onRecipeSelect={onRecipeSelect} />
+        <MenuOverlayContent isOpen={internalOpen} onClose={handleClose} onRecipeSelect={onRecipeSelect} />
         </div>
         </div>
     );
