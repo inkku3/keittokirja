@@ -18,7 +18,7 @@
   --recipelist-bg: #dfdde2;
   --recipelist-bg-dark: #2b2b2b;
 
-  --overlay-bg: rgba(14, 14, 14, 0.5);
+  --overlay-bg: rgba(14, 14, 14, 0.68);
   --dropbtn-bg: #000000;
   --dropbtn-hover: #1f1f1f;
   --dropdown-bg: rgba(19,19,19,0.07);
@@ -29,7 +29,7 @@
   --main-header-size: clamp(4.5rem, 8vw, 5rem);
   --main-header-weight: 300;
   --main-header-letter-spacing: -0.02em;
-  --title-size: clamp(2.8rem, 5vw, 4.5rem);
+  --title-size: clamp(2.2rem, 4vw, 3.4rem);
   --title-weight: 400;
   --title-letter-spacing: -0.03em;
   --ingredients-font-size: 1.05rem;
@@ -266,7 +266,12 @@ a:hover { color: var(--link-hover); }
   font-family: var(--font-sans);
 }
 
-.recipe { max-width: 1000px; margin: 0 auto; padding: var(--recipe-padding-vertical) var(--recipe-padding-horizontal); min-height: 100vh; }
+.recipe {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: calc(var(--recipe-padding-vertical) + 3rem) var(--recipe-padding-horizontal) var(--recipe-padding-vertical);
+  min-height: 100vh;
+}
 
 /* Reserved-space image box: fixed aspect-ratio so the box never changes size
  *  when the image finishes loading (fixes the load-time layout jitter).
@@ -353,13 +358,6 @@ a:hover { color: var(--link-hover); }
   letter-spacing: normal;
 }
 
-.overlay-menu .sortButtons {
-  background-color: var(--sortbtn-bg);
-}
-.overlay-menu .sortButtons.active {
-  background-color: var(--sortbtn-active);
-}
-
 .overlay-content {
   position: relative;
   width: 100%;
@@ -371,20 +369,60 @@ a:hover { color: var(--link-hover); }
   padding: 0 20px;
 }
 
-/* Sticky filter toolbar. Transparent background — the previous translucent
- *  dark strip made recipes look like they were "overlapping" it as they
- *  scrolled underneath. The Suodata button itself keeps its own solid
- *  background (--dropbtn-bg), so it stays fully legible on its own. */
+/* Sticky filter toolbar + panel unit */
+.dropdown-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: #3a3a3a;
+  padding: 10px 0 14px;
+  border-radius: 0 0 10px 10px;
+}
+
 .dropdown-toolbar {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 10px;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: transparent;
-  padding: 10px 0;
+}
+
+.dropdown-content {
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  background: transparent; /* toolbar's own grey now provides the backing */
+  border: none;
+  min-width: 300px;
+  width: 90%;
+  z-index: 1;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* Active/inactive contrast: light-mode active = dark, inactive = light grey.
+ *  Dark mode keeps the existing scheme since it already reads correctly there. */
+.sortButtons {
+  background-color: #555555;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.sortButtons.active {
+  background-color: #222222;
+}
+
+.dark-mode .sortButtons {
+  background-color: var(--sortbtn-bg);
+}
+.dark-mode .sortButtons.active {
+  background-color: var(--sortbtn-active);
 }
 
 .recipeMenu {
@@ -409,30 +447,6 @@ a:hover { color: var(--link-hover); }
   background-color: var(--dropbtn-hover);
 }
 
-.dropdown-content {
-  display: none;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  background-color: var(--dropdown-bg);
-  border: none;
-  min-width: 300px;
-  z-index: 1;
-  color: white;
-  border-radius: 10px;
-  padding: 10px;
-}
-.sortButtons {
-  background-color: var(--sortbtn-bg);
-  border: none;
-  border-radius: 10px;
-  color: white;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-.sortButtons.active {
-  background-color: var(--sortbtn-active);
-}
 .show {
   display: flex;
 }

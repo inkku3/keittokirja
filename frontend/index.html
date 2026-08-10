@@ -1,30 +1,58 @@
 <!doctype html>
-<html lang="en">
+<html lang="fi">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Apply dark-mode to <html> before first paint. Body is handled by a
+      // matching script at the top of <body> (see below) — document.body
+      // does not exist yet when this head script runs, and background-color
+      // is not an inherited property, so html alone is not enough.
+      (function () {
+        try {
+          var stored = localStorage.getItem('darkMode');
+          var isDark = stored === null ? true : stored === 'true';
+          if (isDark) {
+            document.documentElement.classList.add('dark-mode');
+          }
+        } catch (e) {
+          document.documentElement.classList.add('dark-mode');
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#121212" />
     <meta name="description" content="Keittokirja - Recipe cookbook" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Keittokirja" />
     <base href="/">
     <title>Keittokirja inkku.xyz</title>
-
-    <!-- Favicon links -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
-    <!-- PWA manifest -->
     <link rel="manifest" href="/site.webmanifest" />
-
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
+    <script>
+      // Same logic as the head script, applied to <body> — this is the part
+      // that was still missing. document.body exists as soon as its opening
+      // tag is parsed, even before #root is added, so this still runs before
+      // any visible content paints.
+      (function () {
+        try {
+          var stored = localStorage.getItem('darkMode');
+          var isDark = stored === null ? true : stored === 'true';
+          if (isDark) {
+            document.body.classList.add('dark-mode');
+          }
+        } catch (e) {
+          document.body.classList.add('dark-mode');
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

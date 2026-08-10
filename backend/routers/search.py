@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, Query, Request, HTTPException, Response
 from typing import List, Optional
 import logging
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from database import get_db
 from models import Recipe as RecipeModel, RecipeTag
 from schemas import LegacySearchItem
+from config import settings
 
 router = APIRouter(prefix="/api", tags=["search"])
 logger = logging.getLogger('keittokirja.routers.search')
@@ -22,7 +23,6 @@ async def search_endpoint(
 ) -> List[LegacySearchItem]:
     """
     Legacy‑compatible search endpoint.
-
     - If q is empty/omitted and no tags: returns full alphabetically‑sorted list (up to limit).
     - Matching: case‑insensitive substring on title.
     - Tag filter: comma‑separated tokens; recipe must include all tokens (AND semantics).
@@ -30,54 +30,34 @@ async def search_endpoint(
     try:
         client = request.client.host if request.client else 'unknown'
         logger.info('Search request from %s q=%s tags=%s', client, q, tags)
-
-        # Build base query
-        query = db.query(RecipeModel)
-
-        # Apply title filter if q is present
+        query = db.query(RecipeModel).options(joinedload(RecipeModel.tags))
         if q and q.strip():
             query = query.filter(func.lower(RecipeModel.title).contains(q.lower()))
-
-        # Apply tag filter if provided
         if tags:
-            tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+            tag_list = list({t.strip() for t in tags.split(",") if t.strip()})
             if tag_list:
-                # Subquery to find recipe_ids that have all given tags
                 subq = db.query(RecipeTag.recipe_id) \
-                          .filter(RecipeTag.tag.in_(tag_list)) \
-                          .group_by(RecipeTag.recipe_id) \
-                          .having(func.count(RecipeTag.tag) == len(tag_list))
-                recipe_ids = [row[0] for row in subq.all()]
-                if not recipe_ids:
-                    # No recipes match, return empty list
-                    return []
-                query = query.filter(RecipeModel.id.in_(recipe_ids))
-
-        # Order by title
-        query = query.order_by(RecipeModel.title)
-
-        # Apply limit and offset
-        recipes = query.offset(offset).limit(limit).all()
-
-        # Convert to LegacySearchItem
+                         .filter(RecipeTag.tag.in_(tag_list)) \
+                         .group_by(RecipeTag.recipe_id) \
+                         .having(func.count(func.distinct(RecipeTag.tag)) == len(tag_list))
+                query = query.filter(RecipeModel.id.in_(subq))
+        recipes = query.order_by(RecipeModel.title).offset(offset).limit(limit).all()
+        images_base = settings.images_base_url.rstrip('/') if settings.images_base_url else None
         results = []
         for recipe in recipes:
             tags_list = [tag.tag for tag in recipe.tags]
             tags_str = ",".join(tags_list) if tags_list else None
+            image_path = f"{images_base}/{recipe.id}.png" if images_base else None
             results.append(LegacySearchItem(
                 name=recipe.title,
                 url=f"recipes/{recipe.id}",
                 tags=tags_str,
-                image_path=None
+                image_path=image_path
             ))
-
-        # Set cache‑control headers to prevent stale responses
         response.headers['Cache-Control'] = 'private, max-age=0, no-store, no-cache, must-revalidate'
         response.headers['Pragma'] = 'no-cache'
-
         logger.info('Search returning %d items', len(results))
         return results
-
     except Exception as e:
         logger.exception('Search failed: %s', e)
         raise HTTPException(status_code=500, detail='Search failed')

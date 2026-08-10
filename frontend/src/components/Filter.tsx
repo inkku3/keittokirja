@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { recipeAPI } from '../api/recipes';
 import type { Recipe } from '../api/recipes';
 
@@ -21,7 +21,11 @@ const FILTER_CATEGORIES = [
 ];
 
 // ----- FilterDropdown -----
-
+// Renders the toolbar (Suodata button) and the filter panel together as one
+// sticky unit (see .dropdown-sticky in global.css), so the panel opens
+// "attached" to the button rather than appearing as separate content below
+// the scroll. Closes itself on scroll so it doesn't stay open and drift out
+// of sync with what's sticky-pinned on screen.
 export function FilterDropdown({
     onFilterChange,
     isOpen = false,
@@ -56,8 +60,26 @@ export function FilterDropdown({
         onFilterChange?.([]);
     };
 
+    // Close the panel on scroll. The overlay itself is the scroll container
+    // (see .overlay-menu.open { overflow-y: auto } in global.css), so we
+    // listen there rather than on window.
+    useEffect(() => {
+        if (!internalOpen) return;
+
+        const scrollContainer = document.getElementById('myNav');
+        if (!scrollContainer) return;
+
+        const handleScroll = () => {
+            setInternalOpen(false);
+            onToggle?.(false);
+        };
+
+        scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+        return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }, [internalOpen, onToggle]);
+
     return (
-        <>
+        <div className="dropdown-sticky">
         <div className="dropdown-toolbar">
         <button className="dropbtn" onClick={handleToggle}>
         Suodata
@@ -83,7 +105,7 @@ export function FilterDropdown({
             ))}
             </div>
         )}
-        </>
+        </div>
     );
 }
 
@@ -115,8 +137,6 @@ export function FilterManager({
         [onResultsChange]
     );
 
-    // Populate with the full list on mount, before the user has touched any
-    // filter — otherwise the menu shows "no recipes" until they click something.
     useEffect(() => {
         handleFilterChange([]);
         // eslint-disable-next-line react-hooks/exhaustive-deps

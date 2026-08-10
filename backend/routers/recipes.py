@@ -6,31 +6,41 @@ from database import get_db
 from models import Recipe as RecipeModel, RecipeTag
 from schemas import Recipe, LegacyListItem, LegacyRecipeDetail
 from typing import List, Optional
+from config import settings
 import random
 
 router = APIRouter(prefix="/api/recipes", tags=["recipes"])
 logger = logging.getLogger('keittokirja.routers.recipes')
 
+
+def _build_image_path(recipe_id: str) -> Optional[str]:
+    """Build the public R2 image URL for a recipe, or None if image hosting
+    isn't configured. Assumes .png — if your R2 objects use mixed extensions,
+    this needs a stored extension/flag per recipe instead of a guess; the
+    frontend's fallback cycling (png -> jpg -> jpeg) exists specifically to
+    paper over that uncertainty, but it's better for the API to be correct.
+    """
+    if not settings.images_base_url:
+        return None
+    return f"{settings.images_base_url.rstrip('/')}/{recipe_id}.png"
+
 def _recipe_to_legacy_list_item(recipe: RecipeModel) -> LegacyListItem:
-    """Convert Recipe ORM to LegacyListItem (name, url, image_path=None)."""
     return LegacyListItem(
         name=recipe.title,
         url=f"recipes/{recipe.id}",
-        image_path=None  # not stored in DB
+        image_path=_build_image_path(recipe.id),
     )
 
 def _recipe_to_legacy_detail(recipe: RecipeModel) -> LegacyRecipeDetail:
-    """Convert Recipe ORM to LegacyRecipeDetail."""
     return LegacyRecipeDetail(
         title=recipe.title,
         ingredients=recipe.ingredients or "",
         instructions=recipe.instructions or "",
         info=recipe.info,
-        image_path=None
+        image_path=_build_image_path(recipe.id),
     )
 
 def _recipe_to_schema(recipe: RecipeModel) -> Recipe:
-    """Convert ORM model to response schema, aggregating tags as comma‑separated string."""
     tags_list = [tag.tag for tag in recipe.tags]
     tags_str = ",".join(tags_list) if tags_list else None
     return Recipe(
@@ -40,7 +50,7 @@ def _recipe_to_schema(recipe: RecipeModel) -> Recipe:
         instructions=recipe.instructions or "",
         info=recipe.info,
         tags=tags_str,
-        image_path=None,
+        image_path=_build_image_path(recipe.id),
         created_at=None,
         updated_at=None,
     )
