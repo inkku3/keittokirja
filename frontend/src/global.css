@@ -66,6 +66,7 @@ body {
   transition: all 0.2s ease;
 }
 
+/* Home page shell – locked viewport, no scroll */
 .content {
   display: flex;
   flex-direction: column;
@@ -73,9 +74,17 @@ body {
   overflow: hidden;
 }
 
+/* Recipe page – independent scroll, does NOT touch home layout.
+ *  IMPORTANT: this must be a bounded `height`, not `min-height`. With
+ *  min-height the box grows to fit tall content instead of capping, so
+ *  overflow-y:auto never has anything to scroll within itself — scrolling
+ *  then falls through to <body>, which is locked (overflow:hidden) for the
+ *  Home page. That was the mobile "can't scroll, text cuts off" bug. */
 .recipe-page {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--bg);
   color: var(--text);
 }
@@ -188,7 +197,7 @@ a:hover { color: var(--link-hover); }
 .search-wrapper { position: relative; max-width: 400px; width: 100%; margin: 0 auto; }
 .search-container { width: 100%; }
 .search-container input[type=text] {
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.22);
   width: 100%;
   padding: var(--search-input-padding-vertical) var(--search-input-padding-horizontal);
   font-size: var(--search-font-size);
@@ -258,7 +267,35 @@ a:hover { color: var(--link-hover); }
 }
 
 .recipe { max-width: 1000px; margin: 0 auto; padding: var(--recipe-padding-vertical) var(--recipe-padding-horizontal); min-height: 100vh; }
-.image-container { display:flex; flex-direction: column; align-items:center; margin-bottom: 80px; }
+
+/* Reserved-space image box: fixed aspect-ratio so the box never changes size
+ *  when the image finishes loading (fixes the load-time layout jitter).
+ *  Fades in via .is-loaded instead of popping in abruptly. Recipes without a
+ *  working image never render this at all — the component returns null. */
+.image-container {
+  width: 100%;
+  max-width: 700px;
+  aspect-ratio: 4 / 3;
+  margin: 0 auto 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #e8e8e8;
+}
+.dark-mode .image-container {
+  background: #1e1e1e;
+}
+.image-container img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.image-container img.is-loaded {
+  opacity: 1;
+}
+
 .info { text-align: center; max-width: 900px; color: var(--info-color); line-height: 1.3rem; font-weight: 500; margin-top: 2%; }
 .dark-mode .info { color: var(--dark-text); }
 
@@ -270,7 +307,7 @@ a:hover { color: var(--link-hover); }
 .content-container { display: grid; grid-template-columns: 1fr 1.8fr; margin-top: 3%; }
 @media screen and (max-width: 768px) { .content-container { display: block; } }
 
-/* Overlay menu */
+/* Overlay menu — blur intentionally removed */
 .overlay-menu {
   height: 0;
   width: 100%;
@@ -279,8 +316,6 @@ a:hover { color: var(--link-hover); }
   left: 0;
   top: 0;
   background-color: var(--overlay-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   overflow-y: hidden;
   transition: height 0.5s ease;
   display: flex;
@@ -300,7 +335,10 @@ a:hover { color: var(--link-hover); }
   transition: height 0.5s ease, opacity 0.3s ease;
 }
 
-/* UI controls stay white; recipe links follow theme */
+/* UI controls stay white; the overlay backdrop itself is always a dark
+ *  translucent color regardless of light/dark mode, so recipe text inside it
+ *  must always be white too — following var(--text) made it black-on-black
+ *  in light mode. */
 .overlay-menu .dropdown-content,
 .overlay-menu .sortButtons,
 .overlay-menu .close-btn,
@@ -309,11 +347,10 @@ a:hover { color: var(--link-hover); }
 }
 .overlay-menu .recipeMenu,
 .overlay-menu .recipeMenu a {
-  color: var(--text);
-}
-.dark-mode .overlay-menu .recipeMenu,
-.dark-mode .overlay-menu .recipeMenu a {
-  color: var(--dark-text);
+  color: #ffffff;
+  font-weight: 400;
+  font-size: 1.05rem;
+  letter-spacing: normal;
 }
 
 .overlay-menu .sortButtons {
@@ -334,9 +371,10 @@ a:hover { color: var(--link-hover); }
   padding: 0 20px;
 }
 
-/* Sticky filter toolbar. This is now a direct child of .overlay-content
- *  (see Filter.tsx / Menu.tsx) so its containing block spans the full
- *  scrollable content, not just the collapsible filter panel. */
+/* Sticky filter toolbar. Transparent background — the previous translucent
+ *  dark strip made recipes look like they were "overlapping" it as they
+ *  scrolled underneath. The Suodata button itself keeps its own solid
+ *  background (--dropbtn-bg), so it stays fully legible on its own. */
 .dropdown-toolbar {
   display: flex;
   justify-content: center;
@@ -345,14 +383,16 @@ a:hover { color: var(--link-hover); }
   position: sticky;
   top: 0;
   z-index: 5;
-  background: rgba(14, 14, 14, 0.6);
+  background: transparent;
   padding: 10px 0;
-  border-radius: 0 0 10px 10px;
 }
 
 .recipeMenu {
   padding-top: 20px;
-  padding-bottom: 50vh;
+  padding-bottom: 25vh;
+}
+.recipeMenu > div {
+  padding: 12px 0;
 }
 
 .dropbtn {
@@ -462,4 +502,5 @@ a:hover { color: var(--link-hover); }
   .search-container { width: 100%; }
   .recipelist { width: 100%; }
   .recipeMenu { padding-top: 20px; margin-top: 0; margin-bottom: 0; }
+  .recipe { padding-top: 3rem; padding-bottom: 6rem; }
 }

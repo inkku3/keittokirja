@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Recipe } from '../api/recipes';
 import { useImageLoader } from '../hooks/useImageLoader';
+import { recipeImageCandidates } from '../config/images';
 
 // ----- RecipeTitle -----
 export function RecipeTitle({ title, className = 'title' }: { title: string; className?: string }) {
@@ -81,7 +82,7 @@ export function RecipeContentDisplay({
     );
 }
 
-// ----- RecipeImage (simple fallback) -----
+// ----- RecipeImage (simple fallback, still used standalone/in tests) -----
 export function RecipeImage({
     recipeId,
     title,
@@ -94,12 +95,7 @@ export function RecipeImage({
     const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
     const [hasError, setHasError] = React.useState(false);
 
-    const imageSources = [
-        imagePath,
-        `recipes/img/${recipeId}.png`,
-        `recipes/img/${recipeId}.jpg`,
-        `recipes/img/${recipeId}.jpeg`,
-    ].filter(Boolean);
+    const imageSources = recipeImageCandidates(recipeId, imagePath);
 
     const handleImageError = () => {
         const nextIndex = currentImageIndex + 1;
@@ -126,6 +122,10 @@ export function RecipeImage({
 }
 
 // ----- ResponsiveRecipeImage (with useImageLoader) -----
+// Used by RecipeDetail. Reserves a fixed aspect-ratio box (see global.css
+// .image-container) so nothing shifts size when the image finishes loading —
+// this is what fixes the load-time layout jitter. The image fades in via the
+// "is-loaded" class rather than popping in abruptly.
 export function ResponsiveRecipeImage({
     recipeId,
     title,
@@ -138,18 +138,15 @@ export function ResponsiveRecipeImage({
     className?: string;
 }) {
     const { currentImageSrc, isLoading, hasError, handleImageLoad, handleImageError } = useImageLoader({
-        sources: [imagePath, `recipes/img/${recipeId}.png`, `recipes/img/${recipeId}.jpg`, `recipes/img/${recipeId}.jpeg`].filter(
-            (s): s is string => !!s
-        ),
+        sources: recipeImageCandidates(recipeId, imagePath),
     });
 
     if (hasError) return null;
 
     return (
         <div className="image-container">
-        {isLoading && <div className="image-loading">Loading image...</div>}
         <img
-        className={className}
+        className={isLoading ? className : `${className} is-loaded`}
         id="image"
         src={currentImageSrc ?? undefined}
         alt={title}
@@ -164,7 +161,7 @@ export function ResponsiveRecipeImage({
 export function RecipeDetail({ recipe }: { recipe: Recipe }) {
     return (
         <div className="recipe">
-        <RecipeImage recipeId={recipe.id} title={recipe.title} imagePath={recipe.image_path} />
+        <ResponsiveRecipeImage recipeId={recipe.id} title={recipe.title} imagePath={recipe.image_path} />
         <RecipeTitle title={recipe.title} />
         <RecipeInfo info={recipe.info || ''} />
         <div className="content-container">
