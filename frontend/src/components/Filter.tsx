@@ -52,7 +52,12 @@ export function FilterDropdown({
             newFilters.add(tagId);
         }
         setSelectedFilters(newFilters);
-        onFilterChange?.(Array.from(newFilters));
+
+        // Translate UI ids -> DB tag values (Finnish) before sending upstream
+        const dbTags = Array.from(newFilters).map(
+            (id) => FILTER_CATEGORIES.find((c) => c.id === id)?.label ?? id
+        );
+        onFilterChange?.(dbTags);
     };
 
     const clearFilters = () => {
