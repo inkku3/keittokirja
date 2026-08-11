@@ -72,7 +72,7 @@ export function RandomRecipeButton({
         onClick={handleClick}
         disabled={isLoading}
         >
-        {isLoading ? 'Ladataan...' : 'Yllätysresepti'}
+        Yllätysresepti
         </button>
         {error && <div className="error-message">{error}</div>}
         </>

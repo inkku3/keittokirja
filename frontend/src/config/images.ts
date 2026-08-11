@@ -1,4 +1,4 @@
-const DOMAIN = 'img.keittokirja.inkku.xyz';
+const DOMAIN = 'https://img.keittokirja.inkku.xyz';
 
 const R2_BASE_URL = DOMAIN || '/recipes/img';
 

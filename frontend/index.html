@@ -53,6 +53,21 @@
         }
       })();
     </script>
+    <script>
+  (function () {
+    try {
+      var stored = localStorage.getItem('darkMode');
+      var isDark = stored === null ? true : stored === 'true';
+      if (isDark) {
+        document.documentElement.classList.add('dark-mode');
+        document.documentElement.style.backgroundColor = '#121212';
+      }
+    } catch (e) {
+      document.documentElement.classList.add('dark-mode');
+      document.documentElement.style.backgroundColor = '#121212';
+    }
+  })();
+</script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
