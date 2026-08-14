@@ -44,6 +44,11 @@
   --btn-padding: 10px 20px;
   --btn-radius: 10px;
 
+  /* Shared vertical center point for the overlay's top bar (close button +
+   *  filter button), so both can be centered on the same line regardless
+   *  of their own box heights. */
+  --overlay-topbar-y: 36px;
+
   --home-padding: 2rem;
   --search-input-padding-vertical: 1rem;
   --search-input-padding-horizontal: 1.13rem;
@@ -379,42 +384,56 @@ a:hover { color: var(--link-hover); }
   padding: 0 20px;
 }
 
-/* Sticky filter toolbar + panel unit */
+/* Filter toolbar + panel unit — anchored strictly from top edge so it
+ * never shifts vertically when child elements shrink or grow. */
 .dropdown-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  position: fixed;
+  top: calc(var(--overlay-topbar-y) - 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  background: #2c2c2c;
-  padding: 10px 0 14px;
-  border-radius: 0 0 10px 10px;
-}
-.dark-mode .dropdown-sticky {
-  background: #1c1c1c;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 
 .dropdown-toolbar {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 10px;
 }
 
+.clear-filters {
+  position: absolute;
+  left: 100%;
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
 .dropdown-content {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
   display: none;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  background: transparent; /* toolbar's own grey now provides the backing */
+  gap: 8px;
+  background: #2c2c2c;
   border: none;
-  min-width: 300px;
-  width: 90%;
-  z-index: 1;
+  width: max-content;
+  max-width: 850px;
+  z-index: 1000;
   border-radius: 10px;
-  padding: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+}
+.dark-mode .dropdown-content {
+  background: #1c1c1c;
 }
 
 /* Active/inactive contrast: light-mode active = dark, inactive = light grey.
@@ -465,6 +484,9 @@ body:not(.dark-mode) .overlay-menu .sortButtons.active {
   border-radius: 10px;
   border: 1px;
   border-color: #1f1f1f;
+  position: relative;
+  top: 3px; /* nudge down without affecting layout flow */
+  white-space: nowrap; /* prevents button text from breaking into two lines */
 }
 .dropbtn:hover, .dropbtn:focus {
   background-color: var(--dropbtn-hover);
@@ -474,11 +496,14 @@ body:not(.dark-mode) .overlay-menu .sortButtons.active {
   display: flex;
 }
 .dropdown-content.show {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   animation: dropdownReveal 0.25s ease;
 }
 @keyframes dropdownReveal {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .menu-icon {
@@ -520,9 +545,11 @@ body:not(.dark-mode) .overlay-menu .sortButtons.active {
   color: white;
   font-size: 3rem;
   font-weight: 300;
+  line-height: 1;
   position: fixed;
-  top: 10px;
+  top: var(--overlay-topbar-y);
   right: 25px;
+  transform: translateY(-50%);
   cursor: pointer;
   z-index: 1001;
   background: transparent;
@@ -540,4 +567,33 @@ body:not(.dark-mode) .overlay-menu .sortButtons.active {
   .recipelist { width: 100%; }
   .recipeMenu { padding-top: 20px; margin-top: 0; margin-bottom: 0; }
   .recipe { padding-top: 5rem; padding-bottom: 6rem; }
+
+  .dropbtn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .clear-filters {
+    position: static;
+    margin-left: 0;
+    margin-top: 0;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding: 10px 10px;
+  }
+  .dropdown-toolbar {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .dropdown-content {
+    width: 94vw;
+    max-width: 94vw;
+    padding: 10px;
+    gap: 6px;
+  }
+  .dropdown-content .sortButtons {
+    padding: 6px 10px;
+    font-size: 0.88rem;
+  }
 }

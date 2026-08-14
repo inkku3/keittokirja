@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { recipeAPI } from '../api/recipes';
 import type { Recipe } from '../api/recipes';
 
@@ -91,7 +91,7 @@ export function FilterDropdown({
         {selectedFilters.size > 0 && ` (${selectedFilters.size})`}
         </button>
         {selectedFilters.size > 0 && (
-            <button className="sortButtons clear-filters" onClick={clearFilters}>
+            <button className="sortButtons clear-filters active" onClick={clearFilters}>
             Poista suodattimet
             </button>
         )}
