@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { recipeAPI } from '../api/recipes';
 import type { Recipe } from '../api/recipes';
+import { trackEvent } from '../lib/trackEvent';
 
 // ----- HighlightedText -----
 function escapeRegExp(str: string) {
@@ -127,6 +128,7 @@ export function SearchBar({
                 setResults(coerced);
                 setShowResults(Array.isArray(coerced) && coerced.length > 0);
                 onSearchResults?.(coerced);
+                trackEvent('Search', 'submit', coerced.length > 0 ? 'results' : 'no-results');
             } catch (err: any) {
                 if (err?.name === 'CanceledError' || err?.message === 'canceled') {
                     // ignore

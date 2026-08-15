@@ -1,12 +1,20 @@
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeDetail } from '../hooks/useRecipeDetail';
 import { RecipeDetail } from '../components/RecipeDisplay';
 import { BackButton } from '../components/Buttons';
+import { trackEvent } from '../lib/trackEvent';
 
 export function RecipeDetailPage() {
   const { recipeId } = useParams<{ recipeId: string }>();
   const navigate = useNavigate();
   const { recipe, isLoading, error, notFound } = useRecipeDetail({ recipeId });
+
+  useEffect(() => {
+    if (recipe) {
+      trackEvent('Recipe', 'view', recipe.id);
+    }
+  }, [recipe]);
 
   if (error) {
     return (
